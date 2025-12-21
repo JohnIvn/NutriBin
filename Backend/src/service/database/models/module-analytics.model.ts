@@ -1,6 +1,6 @@
 import { Client } from 'pg';
 
-export async function createModuleTableAnalytics(client: Client) {
+export async function createModuleAnalyticsTable(client: Client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS modules-analytics (
       module_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
