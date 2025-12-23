@@ -11,32 +11,33 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Button } from "../ui/button";
 
-export default function Header() {
+export default function Footer() {
   return (
-    <header className='flex w-full justify-between items-center h-12 bg-orange-500 text-white'>
-      <Link to={"/"} className="text-center h-auto">
-      <img
-        src="/NutriBin_Logo.svg"
-        alt="NutriBin Logo"
-        className="h-8 px-4"
-      />
-
-
-      </Link>
+    <header className='flex w-full justify-between items-center h-20 bg-orange-500 text-white'>
       <nav className="flex w-auto px-2 gap-4">
         <Button asChild className={"bg-transparent hover:bg-amber-700"}>
-          <Link to={'/guide'}>
-            Guide
+          <Link to={'/about'}>
+            About Us
           </Link>
           </Button>
         <Button asChild className={"bg-transparent hover:bg-amber-700"}>
-          <Link to={'/login'}>
-            Login
+          <Link to={'/faqs'}>
+            FAQs
           </Link>
           </Button>
         <Button asChild className={"bg-transparent hover:bg-amber-700"}>
-          <Link to={'/register'}>
+          <Link to={'/policies'}>
             Register
+          </Link>
+          </Button>
+        <Button asChild className={"bg-transparent hover:bg-amber-700"}>
+          <Link to={'/socials'}>
+            Socials
+          </Link>
+          </Button>
+        <Button asChild className={"bg-transparent hover:bg-amber-700"}>
+          <Link to={'/studies'}>
+            Studies
           </Link>
           </Button>
       </nav>
