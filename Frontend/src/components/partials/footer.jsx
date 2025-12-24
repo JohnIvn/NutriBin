@@ -27,7 +27,7 @@ export default function Footer() {
           </Button>
         <Button asChild className={"bg-transparent hover:bg-amber-700"}>
           <Link to={'/policies'}>
-            Register
+            Terms of Service
           </Link>
           </Button>
         <Button asChild className={"bg-transparent hover:bg-amber-700"}>

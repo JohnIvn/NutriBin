@@ -13,7 +13,7 @@ import { Button } from "../ui/button";
 
 export default function Header() {
   return (
-    <header className='flex w-full justify-between items-center h-12 bg-orange-500 text-white'>
+    <header className='flex w-full justify-between items-center h-12 bg-orange-500 text-white px-2'>
       <Link to={"/"} className="text-center h-auto">
       <img
         src="/NutriBin_Logo.svg"
@@ -25,13 +25,13 @@ export default function Header() {
       </Link>
       <nav className="flex w-auto px-2 gap-4">
         <Button asChild className={"bg-transparent hover:bg-amber-700"}>
-          <Link to={'/guide'}>
-            Guide
+          <Link to={'/login'}>
+            Home
           </Link>
           </Button>
         <Button asChild className={"bg-transparent hover:bg-amber-700"}>
-          <Link to={'/login'}>
-            Login
+          <Link to={'/guide'}>
+            Guide
           </Link>
           </Button>
         <Button asChild className={"bg-transparent hover:bg-amber-700"}>
