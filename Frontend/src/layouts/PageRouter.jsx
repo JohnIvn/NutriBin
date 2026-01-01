@@ -1,5 +1,6 @@
 import Login from "@/pages/Login"
 import Machines from "@/pages/Machines"
+import Modules from "@/pages/Modules"
 import UserManagement from "@/pages/Users"
 import { Routes, Route, Navigate } from "react-router-dom"
 
@@ -27,7 +28,7 @@ function PageRouter() {
           />
           <Route
             path='/machines/:user_id'
-            element={<Machines/>}
+            element={<Modules/>}
           />
           <Route
             path='/machines/:user_id/:module_id'

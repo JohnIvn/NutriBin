@@ -50,7 +50,9 @@ import {
 	PaginationPrevious,
 } from "@/components/ui/pagination"
 import { machinesFilter } from "@/schema/machines"
+import { useNavigate } from "react-router-dom"
 function Machines() {
+	const navigate = useNavigate()
 
 	const filterForm = useForm({
 		resolver: zodResolver(machinesFilter),
@@ -63,6 +65,10 @@ function Machines() {
 
 	function filterSubmit() {
 		console.log("Filtration")
+	}
+
+	function navigateModules(id) {
+		navigate(`/machines/${id}`)
 	}
 
 	return (
@@ -117,12 +123,6 @@ function Machines() {
 							</div>
 						</form>
 					</Form>
-					<Button className={'bg-secondary hover:bg-secondary-foreground cursor-pointer'}>
-						+
-						<span className="hidden md:flex">
-							Add User
-						</span>
-					</Button>
 				</TableCaption>
 				<TableHeader>
 					<TableRow className={'flex items-center'}>
@@ -135,17 +135,21 @@ function Machines() {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{Array.from({ length: entriesCount }).map(() => (
-						<TableRow className={'flex items-center'}>
-							<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm" >R3211</TableCell>
-							<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm" >1</TableCell>
-							<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm" >James Jones</TableCell>
-							<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm" >12-12-2023</TableCell>
-							<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm" ><p className="bg-green-100 px-3 py-1 text-green-800 rounded-sm">Active</p></TableCell>
-							<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm" >
+					{Array.from({ length: entriesCount }).map((item, index) => (
+						<TableRow
+							key={index}
+							className="flex items-center cursor-pointer"
+							onClick={() => navigateModules(index)}
+						>
+							<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">R3211</TableCell>
+							<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">1</TableCell>
+							<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">James Jones</TableCell>
+							<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">Broken Blender Motor</TableCell>
+							<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">12-12-2023</TableCell>
+							<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">
 								<DropdownMenu modal={false}>
 									<DropdownMenuTrigger asChild>
-										<Button className={'text-white'} variant="outline" aria-label="Open menu" size="icon-sm">
+										<Button className="text-white" variant="outline" aria-label="Open menu" size="icon-sm">
 											<MoreHorizontalIcon />
 										</Button>
 									</DropdownMenuTrigger>
@@ -158,7 +162,6 @@ function Machines() {
 										</DropdownMenuGroup>
 									</DropdownMenuContent>
 								</DropdownMenu>
-								{/* TODO no dialog components/pop ups (Im not sure about the modals of ShadCn yet - Cania) */}
 							</TableCell>
 						</TableRow>
 					))}
