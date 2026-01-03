@@ -1,4 +1,5 @@
 import Account from "@/pages/Account"
+import Analytics from "@/pages/Analytics"
 import Login from "@/pages/Login"
 import Machines from "@/pages/Machines"
 import Modules from "@/pages/Modules"
@@ -26,6 +27,10 @@ function PageRouter() {
           <Route
             path='/account'
             element={<Account/>}
+          />
+          <Route
+            path='/dashboard'
+            element={<Analytics/>}
           />
           <Route
             path='/machines'

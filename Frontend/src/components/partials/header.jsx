@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useState } from "react";
 
 export default function Header() {
+  // const [user, setUser] = useState(true)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(false) //Temporary
 
