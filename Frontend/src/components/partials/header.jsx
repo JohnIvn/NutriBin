@@ -1,14 +1,5 @@
 import { Link } from "react-router-dom";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuIndicator,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  NavigationMenuViewport,
-} from "@/components/ui/navigation-menu";
+
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -58,9 +49,24 @@ export default function Header() {
             </Link>
             {user ? (
               <nav className="flex gap-2">
+                <Button asChild className={"bg-transparent hover:bg-amber-700"}>
+                  <Link to={'/dashboard'}>
+                    Dashboard
+                  </Link>
+                </Button>
+                <Button asChild className={"bg-transparent hover:bg-amber-700"}>
+                  <Link to={'/users'}>
+                    Users
+                  </Link>
+                </Button>
+                <Button asChild className={"bg-transparent hover:bg-amber-700"}>
+                  <Link to={'/machines'}>
+                    Repairs
+                  </Link>
+                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button className={'bg-transparent border-none outline-none'} variant="outline">MattCania
+                    <Button className={'bg-transparent border-none outline-none cursor-pointer'} variant="outline">MattCania
                       <Avatar className={'m-1'}>
                         {/* Arbitrary Image */}
                         <AvatarImage src="https://github.com/MattCania.png" />
@@ -71,19 +77,20 @@ export default function Header() {
                   <DropdownMenuContent className="w-56" align="start">
                     <DropdownMenuLabel>matthewgab24@gmail.com</DropdownMenuLabel>
                     <DropdownMenuGroup>
-                      <DropdownMenuItem>
-                        Profile
-                        {/* <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut> */}
+                      <DropdownMenuItem asChild>
+                        <Link to={'/account'}>
+                          Profile
+                        </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        Settings
-                        {/* <DropdownMenuShortcut>⌘S</DropdownMenuShortcut> */}
+                      <DropdownMenuItem asChild>
+                        <Link to={'/settings'}>
+                          Settings
+                        </Link>
                       </DropdownMenuItem>
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem>
                       Log out
-                      {/* <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut> */}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

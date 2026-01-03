@@ -37,7 +37,7 @@ function Account() {
 
 	return (
 		<section className='flex flex-col min-h-full h-auto w-3/4 m-auto rounded-xl justify-start items-center p-4 gap-2'>
-			<section className='flex w-full h-full py-2 gap-2'>
+			<section className='flex flex-col lg:flex-row w-full h-full py-2 gap-2'>
 				<Form {...form}>
 					<form className="w-full max-w-3xl space-y-6 text-black shadow shadow-gray-600 p-8">
 						<h1 className='text-black text-4xl font-medium'>Account Settings</h1>
@@ -174,7 +174,7 @@ function Account() {
 
 				</Form>
 
-				<div className='flex flex-col justify-center items-start h-full w-1/3 gap-2'>
+				<div className='flex lg:flex-col justify-center items-start h-full w-full lg:w-1/3 gap-2'>
 					<div className='flex flex-col justify-center items-center h-64 p-4 gap-4 shadow shadow-gray-600'>
 						<h1 className='text-2xl font-medium text-black text-center w-full'>Reset Password</h1>
 						<hr className='w-full shadow-2xl' />
