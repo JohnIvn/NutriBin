@@ -16,8 +16,8 @@ function normalizeEmail(email: string): string {
 
 type StaffPublicRow = {
   staff_id: string;
-  firstname: string;
-  lastname: string;
+  first_name: string;
+  last_name: string;
   contact_number: string | null;
   address: string | null;
   email: string;
@@ -39,6 +39,8 @@ export class StaffAuthService {
     const lastname = dto?.lastname?.trim();
     const emailRaw = dto?.email;
     const password = dto?.password;
+    const birthday = dto?.birthday;
+    const age = dto?.age;
 
     if (!firstname) throw new BadRequestException('firstname is required');
     if (!lastname) throw new BadRequestException('lastname is required');
@@ -65,10 +67,19 @@ export class StaffAuthService {
     const passwordHash = await bcrypt.hash(password, 10);
 
     const created = await client.query<StaffPublicRow>(
-      `INSERT INTO user_staff (firstname, lastname, contact_number, address, email, password)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING staff_id, firstname, lastname, contact_number, address, email, date_created, last_updated, status`,
-      [firstname, lastname, contactNumber, address, email, passwordHash],
+      `INSERT INTO user_staff (first_name, last_name, birthday, age, contact_number, address, email, password)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING staff_id, first_name, last_name, contact_number, address, email, date_created, last_updated, status`,
+      [
+        firstname,
+        lastname,
+        birthday,
+        age,
+        contactNumber,
+        address,
+        email,
+        passwordHash,
+      ],
     );
 
     const staff = created.rows[0];
@@ -93,7 +104,7 @@ export class StaffAuthService {
     const client = this.databaseService.getClient();
 
     const result = await client.query<StaffDbRow>(
-      `SELECT staff_id, firstname, lastname, contact_number, address, email, password, date_created, last_updated, status
+      `SELECT staff_id, first_name, last_name, contact_number, address, email, password, date_created, last_updated, status
        FROM user_staff
        WHERE email = $1
        LIMIT 1`,
@@ -101,7 +112,10 @@ export class StaffAuthService {
     );
 
     if (!result.rowCount) {
-      throw new UnauthorizedException('Invalid email or password');
+      return {
+        ok: false,
+        error: 'Account not found',
+      };
     }
 
     const staff = result.rows[0];
@@ -111,13 +125,16 @@ export class StaffAuthService {
 
     const matches = await bcrypt.compare(password, staff.password);
     if (!matches) {
-      throw new UnauthorizedException('Invalid email or password');
+      return {
+        ok: false,
+        error: 'Wrong password',
+      };
     }
 
     const safeStaff: StaffPublicRow = {
       staff_id: staff.staff_id,
-      firstname: staff.firstname,
-      lastname: staff.lastname,
+      first_name: staff.first_name,
+      last_name: staff.last_name,
       contact_number: staff.contact_number,
       address: staff.address,
       email: staff.email,

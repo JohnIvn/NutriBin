@@ -13,8 +13,8 @@ export async function createUserStaffTable(client: Client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS user_staff (
       staff_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-      firstname text NOT NULL,
-      lastname text NOT NULL,
+      first_name text NOT NULL,
+      last_name text NOT NULL,
       birthday text NOT NULL,
       age integer NOT NULL,
       contact_number text UNIQUE,
