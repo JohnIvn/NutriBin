@@ -17,43 +17,49 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import Requests from "@/utils/Requests";
 export function Login() {
 	const [showPass, setShowPass] = useState(false)
 	const form = useForm({
 		resolver: zodResolver(adminLogin),
 		defaultValues: {
-			username: "",
+			email: "",
 			password: "",
 		},
 	});
 
+	async function onSubmit(values) {
+		try {
+			const formData = values
+			
+			const response = await Requests('')
 
-
-	function onSubmit(values) {
-		//TODO
-		console.log(values);
+		} catch (error) {
+			// ErrorHandler here
+			console.error(error)
+		}
 	}
 
 	return (
 		<section className="flex w-full h-auto my-auto mx-0 justify-between">
-			<div className="hidden md:flex justify-center items-center bg-center relative w-1/max-h-full border m-0">
+			<div className="hidden md:flex justify-center items-center bg-center relative max-h-full m-auto">
 				<img src="/Login.png" alt="Logo" className="h-full w-lg -right-64" />
-				<img src="/Logo.svg" alt="Logo" className="absolute h-128 w-lg -right-64" />
+				<img src="/Logo.svg" alt="Logo" className="absolute h-128 w-lg -right-64 hidden lg:flex" />
 			</div>
 
-			<div className="flex flex-col justify-center items-center w-full md:w-2/3 h-full my-auto ">
+			<div className="flex flex-col justify-center items-center w-full lg:w-2/3 h-full my-auto ">
 				<Form {...form} >
 					<h1 className="w-auto text-start text-4xl font-medium m-4">Sign In</h1>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 w-80">
 
 						<FormField
 							control={form.control}
-							name="username"
+							name="email"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Username</FormLabel>
+									<FormLabel>Email</FormLabel>
 									<FormControl>
-										<Input placeholder="Username" className={'border border-secondary-foreground'} {...field} />
+										<Input placeholder="example123@gmail.com" className={'border border-secondary-foreground'} {...field} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -67,7 +73,7 @@ export function Login() {
 								<FormItem>
 									<FormLabel>Password</FormLabel>
 									<FormControl>
-										<Input type={showPass ? 'text' : 'password'} placeholder="Password" className={'border-1 border-secondary-foreground'} {...field} />
+										<Input type={showPass ? 'text' : 'password'} placeholder="Password" className={'border border-secondary-foreground'} {...field} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>

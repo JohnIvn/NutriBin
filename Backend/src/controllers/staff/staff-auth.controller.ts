@@ -8,6 +8,7 @@ export class StaffAuthController {
 
   @Post('signup')
   async signUp(@Body() body: StaffSignUpDto) {
+    console.log(body);
     if (!body) {
       throw new BadRequestException('Request body is required');
     }

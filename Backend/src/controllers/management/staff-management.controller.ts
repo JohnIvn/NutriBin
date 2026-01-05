@@ -4,8 +4,8 @@ import { DatabaseService } from '../../service/database/database.service';
 
 type StaffPublicRow = {
   staff_id: string;
-  f_name: string;
-  l_name: string;
+  firstname: string;
+  lastname: string;
   contact_number: string | null;
   address: string | null;
   email: string;
@@ -24,7 +24,7 @@ export class StaffManagementController {
 
     try {
       const result = await client.query<StaffPublicRow>(
-        `SELECT staff_id, f_name, l_name, contact_number, address, email, date_created, last_updated, status
+        `SELECT staff_id, firstname, lastname, contact_number, address, email, date_created, last_updated, status
 				 FROM user_staff
 				 ORDER BY date_created DESC`,
       );

@@ -185,8 +185,8 @@ function Admins() {
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{Array.from({ length: entriesCount }).map(() => (
-							<TableRow className={'flex items-center'}>
+						{Array.from({ length: entriesCount }).map((element, index) => (
+							<TableRow className={'flex items-center'} key={index}>
 								<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm" >EM3211</TableCell>
 								<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm" >John</TableCell>
 								<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm" >Joseph</TableCell>

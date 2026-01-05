@@ -16,8 +16,8 @@ function normalizeEmail(email: string): string {
 
 type StaffPublicRow = {
   staff_id: string;
-  f_name: string;
-  l_name: string;
+  firstname: string;
+  lastname: string;
   contact_number: string | null;
   address: string | null;
   email: string;
@@ -35,18 +35,18 @@ export class StaffAuthService {
   constructor(private readonly databaseService: DatabaseService) {}
 
   async signUp(dto: StaffSignUpDto) {
-    const fName = dto?.fName?.trim();
-    const lName = dto?.lName?.trim();
+    const firstname = dto?.firstname?.trim();
+    const lastname = dto?.lastname?.trim();
     const emailRaw = dto?.email;
     const password = dto?.password;
 
-    if (!fName) throw new BadRequestException('fName is required');
-    if (!lName) throw new BadRequestException('lName is required');
+    if (!firstname) throw new BadRequestException('firstname is required');
+    if (!lastname) throw new BadRequestException('lastname is required');
     if (!emailRaw?.trim()) throw new BadRequestException('email is required');
     if (!password) throw new BadRequestException('password is required');
 
     const email = normalizeEmail(emailRaw);
-    const contactNumber = dto?.contactNumber?.trim() || null;
+    const contactNumber = dto?.contact?.trim() || null;
     const address = dto?.address?.trim() || null;
 
     const client = this.databaseService.getClient();
@@ -65,10 +65,10 @@ export class StaffAuthService {
     const passwordHash = await bcrypt.hash(password, 10);
 
     const created = await client.query<StaffPublicRow>(
-      `INSERT INTO user_staff (f_name, l_name, contact_number, address, email, password)
+      `INSERT INTO user_staff (firstname, lastname, contact_number, address, email, password)
        VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING staff_id, f_name, l_name, contact_number, address, email, date_created, last_updated, status`,
-      [fName, lName, contactNumber, address, email, passwordHash],
+       RETURNING staff_id, firstname, lastname, contact_number, address, email, date_created, last_updated, status`,
+      [firstname, lastname, contactNumber, address, email, passwordHash],
     );
 
     const staff = created.rows[0];
@@ -93,7 +93,7 @@ export class StaffAuthService {
     const client = this.databaseService.getClient();
 
     const result = await client.query<StaffDbRow>(
-      `SELECT staff_id, f_name, l_name, contact_number, address, email, password, date_created, last_updated, status
+      `SELECT staff_id, firstname, lastname, contact_number, address, email, password, date_created, last_updated, status
        FROM user_staff
        WHERE email = $1
        LIMIT 1`,
@@ -116,8 +116,8 @@ export class StaffAuthService {
 
     const safeStaff: StaffPublicRow = {
       staff_id: staff.staff_id,
-      f_name: staff.f_name,
-      l_name: staff.l_name,
+      firstname: staff.firstname,
+      lastname: staff.lastname,
       contact_number: staff.contact_number,
       address: staff.address,
       email: staff.email,
