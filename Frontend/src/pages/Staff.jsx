@@ -61,36 +61,8 @@ function Staff() {
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-<<<<<<< HEAD
-  const onConfirm = async () => {
-    if (!selectedStaff || !confirmInformation.mode) return;
-
-    try {
-      setActionLoading(true);
-      const mode = confirmInformation.mode.toLowerCase();
-
-      if (mode === "disable") {
-        await handleDisableStaff(selectedStaff.staff_id);
-      } else if (mode === "enable") {
-        await handleEnableStaff(selectedStaff.staff_id);
-      } else if (mode === "delete") {
-        await handleDeleteStaff(selectedStaff.staff_id);
-      }
-
-      closeConfirm();
-      setSelectedStaff(null);
-    } catch (error) {
-      console.error("Action failed:", error);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const role = /* Get this from context */ "admin";
-=======
   const onConfirm = () => { console.log("Confirmed"); };
   const role = "admin";
->>>>>>> 37ba42f (altered designs and fixed responsiveness)
 
   const filterForm = useForm({
     resolver: zodResolver(userFilter),
@@ -102,123 +74,6 @@ function Staff() {
   const fetchStaff = async () => {
     try {
       setLoading(true);
-<<<<<<< HEAD
-      const response = await Requests({
-        url: "/management/staff",
-        method: "GET",
-        credentials: true,
-      });
-
-      console.log("Staff API Response:", response.data);
-
-      if (response.data.ok) {
-        console.log("Staff data received:", response.data.staff);
-        setStaffList(response.data.staff || []);
-      } else {
-        console.error("API returned ok: false");
-        toast.error("Failed to fetch staff list");
-      }
-    } catch (error) {
-      console.error("Error fetching staff:", error);
-      console.error("Error details:", error.response?.data);
-      toast.error(
-        "Failed to load staff data: " +
-          (error.response?.data?.message || error.message)
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDisableStaff = async (staffId) => {
-    try {
-      const response = await Requests({
-        url: `/management/staff/${staffId}/disable`,
-        method: "PATCH",
-        credentials: true,
-      });
-
-      if (response.data.ok) {
-        toast.success("Staff member disabled successfully");
-        await fetchStaff(); // Refresh the list
-      } else {
-        toast.error("Failed to disable staff member");
-      }
-    } catch (error) {
-      console.error("Error disabling staff:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to disable staff member"
-      );
-    }
-  };
-
-  const handleEnableStaff = async (staffId) => {
-    try {
-      const response = await Requests({
-        url: `/management/staff/${staffId}/enable`,
-        method: "PATCH",
-        credentials: true,
-      });
-
-      if (response.data.ok) {
-        toast.success("Staff member enabled successfully");
-        await fetchStaff(); // Refresh the list
-      } else {
-        toast.error("Failed to enable staff member");
-      }
-    } catch (error) {
-      console.error("Error enabling staff:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to enable staff member"
-      );
-    }
-  };
-
-  const handleDeleteStaff = async (staffId) => {
-    try {
-      const response = await Requests({
-        url: `/management/staff/${staffId}`,
-        method: "DELETE",
-        credentials: true,
-      });
-
-      if (response.data.ok) {
-        toast.success("Staff member deleted successfully");
-        await fetchStaff(); // Refresh the list
-      } else {
-        toast.error("Failed to delete staff member");
-      }
-    } catch (error) {
-      console.error("Error deleting staff:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to delete staff member"
-      );
-    }
-  };
-
-  const displayModal = (mode, staff = null) => {
-    setShowModal(true);
-    setModalMode(mode);
-    setSelectedStaff(staff);
-  };
-
-  const displayConfirm = (mode, title, description, staff) => {
-    setShowConfirm(true);
-    setSelectedStaff(staff);
-    setConfirmInformation({
-      mode: mode,
-      title: title,
-      description: description,
-    });
-  };
-
-  const closeModal = () => {
-    setShowModal(false);
-  };
-
-  const closeConfirm = () => {
-    setShowConfirm(false);
-=======
       const response = await Requests({ url: "/management/staff", method: "GET", credentials: true });
       if (response.data.ok) setStaffList(response.data.staff || []);
     } catch (error) { toast.error("Failed to load staff data"); } 
@@ -229,7 +84,6 @@ function Staff() {
   const displayConfirm = (mode, title, description) => {
     setShowConfirm(true);
     setConfirmInformation({ mode, title, description });
->>>>>>> 37ba42f (altered designs and fixed responsiveness)
   };
 
   const closeModal = () => setShowModal(false);
@@ -256,20 +110,8 @@ function Staff() {
   const totalPages = Math.ceil(filteredStaff.length / entriesCount);
 
   return (
-<<<<<<< HEAD
-    <>
-      {showModal && (
-        <AdminModal
-          mode={modalMode}
-          cancel={closeModal}
-          staff={selectedStaff}
-          onSuccess={fetchStaff}
-        />
-      )}
-=======
     <div className="w-full bg-[#FDF8F1] min-h-screen pb-10">
       {showModal && <AdminModal mode={modalMode} cancel={closeModal} />}
->>>>>>> 37ba42f (altered designs and fixed responsiveness)
       {showConfirm && (
         <ConfirmBox
           mode={confirmInformation.mode}
@@ -351,144 +193,6 @@ function Staff() {
                 </div>
               </div>
             </Form>
-<<<<<<< HEAD
-            <Button
-              onClick={() => displayModal("default")}
-              className={
-                "bg-secondary hover:bg-secondary-foreground cursor-pointer"
-              }
-            >
-              +<span className="hidden md:flex">Add Staff</span>
-            </Button>
-          </TableCaption>
-          <TableHeader>
-            <TableRow className={"flex items-center"}>
-              <TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">
-                Staff ID
-              </TableHead>
-              <TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">
-                First Name
-              </TableHead>
-              <TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">
-                Last Name
-              </TableHead>
-              <TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">
-                Created At
-              </TableHead>
-              <TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">
-                Status
-              </TableHead>
-              <TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">
-                Actions
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow className={"flex items-center justify-center"}>
-                <TableCell colSpan={6} className="text-center py-8">
-                  Loading staff data...
-                </TableCell>
-              </TableRow>
-            ) : paginatedStaff.length === 0 ? (
-              <TableRow className={"flex items-center justify-center"}>
-                <TableCell colSpan={6} className="text-center py-8">
-                  No staff members found
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginatedStaff.map((staff, index) => (
-                <TableRow className={"flex items-center"} key={staff.staff_id}>
-                  <TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">
-                    {staff.staff_id}
-                  </TableCell>
-                  <TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">
-                    {staff.first_name}
-                  </TableCell>
-                  <TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">
-                    {staff.last_name}
-                  </TableCell>
-                  <TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">
-                    {formatDate(staff.date_created)}
-                  </TableCell>
-                  <TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">
-                    <p
-                      className={`px-3 py-1 rounded-sm ${
-                        staff.status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {staff.status.charAt(0).toUpperCase() +
-                        staff.status.slice(1)}
-                    </p>
-                  </TableCell>
-                  <TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">
-                    <DropdownMenu modal={false}>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          className={"text-white"}
-                          variant="outline"
-                          aria-label="Open menu"
-                          size="icon-sm"
-                        >
-                          <MoreHorizontalIcon />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-40" align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuGroup>
-                          {role === "admin" && (
-                            <DropdownMenuItem
-                              onClick={() => displayModal("edit", staff)}
-                            >
-                              Edit
-                            </DropdownMenuItem>
-                          )}
-                          {staff.status === "active" ? (
-                            <DropdownMenuItem
-                              onClick={() =>
-                                displayConfirm(
-                                  "Disable",
-                                  "Disabling Account",
-                                  "Disabled account won't be able to access any staff privileges! Are you sure you want to disable this account?",
-                                  staff
-                                )
-                              }
-                            >
-                              Disable
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem
-                              onClick={() =>
-                                displayConfirm(
-                                  "Enable",
-                                  "Enabling Account",
-                                  "This will restore staff privileges to this account. Are you sure you want to enable this account?",
-                                  staff
-                                )
-                              }
-                            >
-                              Enable
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            onClick={() =>
-                              displayConfirm(
-                                "Delete",
-                                "Account Deletion",
-                                "This will permanently delete the account! Are you sure you want to delete this account?",
-                                staff
-                              )
-                            }
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-=======
           </div>
 
           <div className="overflow-x-auto w-full">
@@ -500,7 +204,6 @@ function Staff() {
                   <TableHead className="font-bold text-gray-700">JOINED DATE</TableHead>
                   <TableHead className="font-bold text-gray-700">ACCOUNT STATUS</TableHead>
                   <TableHead className="text-right font-bold text-gray-700 pr-6">ACTIONS</TableHead>
->>>>>>> 37ba42f (altered designs and fixed responsiveness)
                 </TableRow>
               </TableHeader>
               <TableBody>
