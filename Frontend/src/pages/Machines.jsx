@@ -75,6 +75,7 @@ function Machines() {
   });
   const [repairs, setRepairs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filterForm = useForm({
     resolver: zodResolver(machinesFilter),
@@ -125,6 +126,36 @@ function Machines() {
   };
 
   const entriesCount = parseInt(filterForm.watch("count") || "10");
+  const searchTerm = filterForm.watch("term")?.toLowerCase() || "";
+
+  const filteredRepairs = repairs.filter((repair) => {
+    if (!searchTerm) return true;
+
+    const haystack = [
+      repair.repair_id,
+      repair.machine_id,
+      repair.user_id,
+      repair.repair_status,
+    ]
+      .filter(Boolean)
+      .map((value) => value.toString().toLowerCase());
+
+    return haystack.some((value) => value.includes(searchTerm));
+  });
+
+  const paginatedRepairs = filteredRepairs.slice(
+    (currentPage - 1) * entriesCount,
+    currentPage * entriesCount
+  );
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredRepairs.length / entriesCount)
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [entriesCount, searchTerm]);
 
   useEffect(() => {
     fetchRepairs();
@@ -314,7 +345,7 @@ function Machines() {
                 </TableCell>
               </TableRow>
             ) : (
-              repairs.slice(0, entriesCount).map((repair) => (
+              paginatedRepairs.map((repair) => (
                 <TableRow
                   key={repair.repair_id}
                   className="flex items-center cursor-pointer"
@@ -426,24 +457,65 @@ function Machines() {
           <Pagination>
             <PaginationContent>
               <PaginationItem>
-                <PaginationPrevious href="#" />
+                <PaginationPrevious
+                  onClick={() =>
+                    setCurrentPage((page) => Math.max(1, page - 1))
+                  }
+                  disabled={currentPage === 1}
+                  className={
+                    currentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
               </PaginationItem>
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNumber = index + 1;
+
+                if (
+                  pageNumber === 1 ||
+                  pageNumber === totalPages ||
+                  (pageNumber >= currentPage - 1 &&
+                    pageNumber <= currentPage + 1)
+                ) {
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(pageNumber)}
+                        isActive={currentPage === pageNumber}
+                        className="cursor-pointer"
+                      >
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                }
+
+                if (
+                  pageNumber === currentPage - 2 ||
+                  pageNumber === currentPage + 2
+                ) {
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  );
+                }
+
+                return null;
+              })}
               <PaginationItem>
-                <PaginationLink href="#">1</PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationLink href="#" isActive>
-                  2
-                </PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationLink href="#">3</PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationEllipsis />
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationNext href="#" />
+                <PaginationNext
+                  onClick={() =>
+                    setCurrentPage((page) => Math.min(totalPages, page + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
               </PaginationItem>
             </PaginationContent>
           </Pagination>

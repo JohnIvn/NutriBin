@@ -11,6 +11,7 @@ import Faqs from "@/pages/Faqs";
 import Tos from "@/pages/Tos";
 import Socials from "@/pages/Socials";
 import Studies from "@/pages/Studies";
+import Guide from "@/pages/Guide";
 
 function PageRouter() {
   return (
@@ -67,42 +68,13 @@ function PageRouter() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/about"
-        element={
-            <About />
-        }
-      />
-      <Route
-        path="/faqs"
-        element={
-            <Faqs />
-        }
-      />
-      <Route
-        path="/policies"
-        element={
-            <Tos />
-        }
-      />
-      <Route
-        path="/socials"
-        element={
-            <Socials />
-        }
-      />
-      <Route
-        path="/studies"
-        element={
-            <Studies />
-        }
-      />
-      <Route
-        path="/guides"
-        element={
-            <Studies />
-        }
-      />    
+      <Route path="/about" element={<About />} />
+      <Route path="/faqs" element={<Faqs />} />
+      <Route path="/policies" element={<Tos />} />
+      <Route path="/socials" element={<Socials />} />
+      <Route path="/studies" element={<Studies />} />
+      <Route path="/guide" element={<Guide />} />
+      <Route path="/guides" element={<Guide />} />
     </Routes>
   );
 }

@@ -8,40 +8,135 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { adminAccount } from "@/schema/adminAccount";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useState } from "react";
+import { z } from "zod";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import Requests from "@/utils/Requests";
+import { useUser } from "@/contexts/UserContext";
+
+const settingsSchema = z.object({
+  firstname: z.string().min(1, "First name is required"),
+  lastname: z.string().min(1, "Last name is required"),
+  address: z.string().min(1, "Address is required"),
+  age: z.number().min(1, "Age is required"),
+  number: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine((value) => value === "" || value.length >= 7, {
+      message: "Contact number is too short",
+    }),
+});
 
 function Settings() {
+  const { user, login } = useUser();
   const [editMode, setEditMode] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const form = useForm({
-    resolver: zodResolver(adminAccount),
+    resolver: zodResolver(settingsSchema),
     defaultValues: {
       firstname: "",
       lastname: "",
       address: "",
       age: 0,
-      gender: "male",
-      number: 0,
+      number: "",
     },
   });
 
-  const handleSubmission = () => {
-    //TODO Edit User Account Details
-    setEditMode(false);
+  useEffect(() => {
+    if (!user?.staff_id) {
+      setLoadingProfile(false);
+      return;
+    }
+
+    loadProfile();
+  }, [user?.staff_id]);
+
+  const loadProfile = async () => {
+    if (!user?.staff_id) return;
+
+    try {
+      setLoadingProfile(true);
+      const response = await Requests({
+        url: `/settings/${user.staff_id}`,
+        method: "GET",
+        credentials: true,
+      });
+
+      if (response.data?.ok && response.data?.staff) {
+        const staff = response.data.staff;
+        form.reset({
+          firstname: staff.first_name || "",
+          lastname: staff.last_name || "",
+          address: staff.address || "",
+          age: staff.age ?? 0,
+          gender: "male",
+          number: staff.contact_number || "",
+        });
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to load account settings"
+      );
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
+  const onSubmit = async (values) => {
+    if (!user?.staff_id) return;
+
+    try {
+      setSaving(true);
+      const response = await Requests({
+        url: `/settings/${user.staff_id}`,
+        method: "PATCH",
+        credentials: true,
+        data: {
+          firstname: values.firstname,
+          lastname: values.lastname,
+          address: values.address,
+          age: Number(values.age),
+          contact: values.number?.toString() || null,
+        },
+      });
+
+      if (response.data?.ok) {
+        toast.success("Settings updated successfully");
+        setEditMode(false);
+
+        if (response.data.staff) {
+          login(response.data.staff);
+        }
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to update account settings"
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <section className="flex flex-col min-h-full h-auto w-3/4 m-auto rounded-xl justify-start items-center p-4 gap-2">
       <section className="flex flex-col lg:flex-row w-full h-full py-2 gap-2">
         <Form {...form}>
-          <form className="w-full max-w-3xl space-y-6 text-black shadow shadow-gray-600 p-8">
+          <form
+            className="w-full max-w-3xl space-y-6 text-black shadow shadow-gray-600 p-8"
+            onSubmit={form.handleSubmit(onSubmit)}
+          >
             <h1 className="text-black text-4xl font-medium">
               Account Settings
             </h1>
+
+            {loadingProfile && (
+              <p className="text-sm text-gray-600">Loading account...</p>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -53,7 +148,7 @@ function Settings() {
                     <FormControl>
                       <Input
                         {...field}
-                        disabled={!editMode}
+                        disabled={!editMode || loadingProfile}
                         placeholder="First Name"
                       />
                     </FormControl>
@@ -71,7 +166,7 @@ function Settings() {
                     <FormControl>
                       <Input
                         {...field}
-                        disabled={!editMode}
+                        disabled={!editMode || loadingProfile}
                         placeholder="Last Name"
                       />
                     </FormControl>
@@ -90,7 +185,7 @@ function Settings() {
                   <FormControl>
                     <Input
                       {...field}
-                      disabled={!editMode}
+                      disabled={!editMode || loadingProfile}
                       placeholder="Complete Address"
                     />
                   </FormControl>
@@ -107,7 +202,12 @@ function Settings() {
                   <FormItem>
                     <FormLabel>Age</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} disabled={!editMode} />
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        disabled={!editMode || loadingProfile}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -121,62 +221,17 @@ function Settings() {
                   <FormItem>
                     <FormLabel>Contact Number</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} disabled={!editMode} />
+                      <Input
+                        type="text"
+                        {...field}
+                        disabled={!editMode || loadingProfile}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="gender"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Gender</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      className="flex gap-6"
-                      disabled={!editMode}
-                    >
-                      <FormItem className="flex items-center gap-2">
-                        <FormControl>
-                          <RadioGroupItem
-                            value="male"
-                            className="border-secondary data-[state=checked]:bg-secondary data-[state=checked]:border-secondary data-[state=checked]:text-secondary-foreground"
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">Male</FormLabel>
-                      </FormItem>
-
-                      <FormItem className="flex items-center gap-2">
-                        <FormControl>
-                          <RadioGroupItem
-                            value="female"
-                            className="border-secondary data-[state=checked]:bg-secondary data-[state=checked]:border-secondary data-[state=checked]:text-secondary-foreground"
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">Female</FormLabel>
-                      </FormItem>
-
-                      <FormItem className="flex items-center gap-2">
-                        <FormControl>
-                          <RadioGroupItem
-                            value="others"
-                            className="  border-secondary data-[state=checked]:bg-secondary data-[state=checked]:border-secondary data-[state=checked]:text-secondary-foreground"
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">Others</FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <div className="flex gap-4 my-4">
               <Button
@@ -185,6 +240,7 @@ function Settings() {
                   editMode ? "hidden" : "flex"
                 } min-w-48 w-auto h-12 p-2 bg-secondary hover:bg-secondary-foreground cursor-pointer`}
                 onClick={() => setEditMode(true)}
+                disabled={loadingProfile}
               >
                 Edit
               </Button>
@@ -193,7 +249,7 @@ function Settings() {
                 className={`${
                   editMode ? "flex" : "hidden"
                 } min-w-48 w-auto h-12 p-2 bg-gray-800 hover:bg-gray-600 cursor-pointer`}
-                onClick={() => handleSubmission()}
+                disabled={saving}
               >
                 Submit
               </Button>
@@ -202,7 +258,10 @@ function Settings() {
                 className={`${
                   editMode ? "flex" : "hidden"
                 } min-w-48 w-auto h-12 p-2 bg-gray-800 hover:bg-gray-600 cursor-pointer`}
-                onClick={() => setEditMode(false)}
+                onClick={() => {
+                  setEditMode(false);
+                  loadProfile();
+                }}
               >
                 Cancel
               </Button>

@@ -509,65 +509,65 @@ function Staff() {
               ))
             )}
           </TableBody>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className={
+                    currentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+              {[...Array(totalPages)].map((_, i) => {
+                const pageNum = i + 1;
+                if (
+                  pageNum === 1 ||
+                  pageNum === totalPages ||
+                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                ) {
+                  return (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(pageNum)}
+                        isActive={currentPage === pageNum}
+                        className="cursor-pointer"
+                      >
+                        {pageNum}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                } else if (
+                  pageNum === currentPage - 2 ||
+                  pageNum === currentPage + 2
+                ) {
+                  return (
+                    <PaginationItem key={pageNum}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  );
+                }
+                return null;
+              })}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </Table>
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className={
-                  currentPage === 1
-                    ? "pointer-events-none opacity-50"
-                    : "cursor-pointer"
-                }
-              />
-            </PaginationItem>
-            {[...Array(totalPages)].map((_, i) => {
-              const pageNum = i + 1;
-              if (
-                pageNum === 1 ||
-                pageNum === totalPages ||
-                (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-              ) {
-                return (
-                  <PaginationItem key={pageNum}>
-                    <PaginationLink
-                      onClick={() => setCurrentPage(pageNum)}
-                      isActive={currentPage === pageNum}
-                      className="cursor-pointer"
-                    >
-                      {pageNum}
-                    </PaginationLink>
-                  </PaginationItem>
-                );
-              } else if (
-                pageNum === currentPage - 2 ||
-                pageNum === currentPage + 2
-              ) {
-                return (
-                  <PaginationItem key={pageNum}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                );
-              }
-              return null;
-            })}
-            <PaginationItem>
-              <PaginationNext
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
-                disabled={currentPage === totalPages}
-                className={
-                  currentPage === totalPages
-                    ? "pointer-events-none opacity-50"
-                    : "cursor-pointer"
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
       </section>
     </>
   );
