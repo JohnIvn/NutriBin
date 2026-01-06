@@ -3,7 +3,6 @@ import {
   ConflictException,
   InternalServerErrorException,
   Injectable,
-  UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 
