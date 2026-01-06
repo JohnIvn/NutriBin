@@ -20,6 +20,8 @@ type RepairRow = {
   machine_id: string | null;
   repair_status: string;
   date_created: string;
+  first_name?: string | null;
+  last_name?: string | null;
 };
 
 @Controller('management/repair')
@@ -32,7 +34,7 @@ export class RepairManagementController {
 
     try {
       const result = await client.query<RepairRow>(
-        `SELECT repair_id, user_id, machine_id, repair_status, date_created
+        `SELECT repair_id, user_id, machine_id, repair_status, date_created, first_name, last_name
          FROM repair
          ORDER BY date_created DESC`,
       );
@@ -52,7 +54,7 @@ export class RepairManagementController {
 
     try {
       const result = await client.query<RepairRow>(
-        `SELECT repair_id, user_id, machine_id, repair_status, date_created
+        `SELECT repair_id, user_id, machine_id, repair_status, date_created, first_name, last_name
          FROM repair
          WHERE repair_id = $1`,
         [id],

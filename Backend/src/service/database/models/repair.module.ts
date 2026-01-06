@@ -13,8 +13,11 @@ export async function createRepairTable(client: Client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS repair (
       repair_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-      user_id text,
       machine_id text,
+      user_id text,
+      first_name text,
+      last_name text,
+      description text,
       repair_status repair_status DEFAULT 'active',
       date_created timestamptz DEFAULT now()
     );

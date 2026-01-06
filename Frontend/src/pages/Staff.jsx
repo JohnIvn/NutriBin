@@ -26,14 +26,16 @@ import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userFilter } from "@/schema/users";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { MoreHorizontalIcon, Plus, Search, UserCog, UserCheck, ShieldAlert } from "lucide-react";
+import {
+  MoreHorizontalIcon,
+  Plus,
+  Search,
+  UserCog,
+  UserCheck,
+  ShieldAlert,
+} from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -61,7 +63,6 @@ function Staff() {
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const onConfirm = () => { console.log("Confirmed"); };
   const role = "admin";
 
   const filterForm = useForm({
@@ -69,21 +70,70 @@ function Staff() {
     defaultValues: { count: "10", term: "" },
   });
 
-  useEffect(() => { fetchStaff(); }, []);
+  useEffect(() => {
+    fetchStaff();
+  }, []);
 
   const fetchStaff = async () => {
     try {
       setLoading(true);
-      const response = await Requests({ url: "/management/staff", method: "GET", credentials: true });
+      const response = await Requests({
+        url: "/management/staff",
+        method: "GET",
+        credentials: true,
+      });
       if (response.data.ok) setStaffList(response.data.staff || []);
-    } catch (error) { toast.error("Failed to load staff data"); } 
-    finally { setLoading(false); }
+    } catch (error) {
+      toast.error("Failed to load staff data");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const displayModal = (mode) => { setShowModal(true); setModalMode(mode); };
-  const displayConfirm = (mode, title, description) => {
+  const displayModal = (mode, staff = null) => {
+    setSelectedStaff(staff);
+    setShowModal(true);
+    setModalMode(mode);
+  };
+
+  const displayConfirm = (mode, title, description, staff = null) => {
+    setSelectedStaff(staff);
     setShowConfirm(true);
     setConfirmInformation({ mode, title, description });
+  };
+
+  const onConfirm = async () => {
+    if (!selectedStaff) return;
+
+    try {
+      setActionLoading(true);
+      if (confirmInformation.mode === "Disable") {
+        const response = await Requests({
+          url: `/management/staff/${selectedStaff.staff_id}/disable`,
+          method: "PATCH",
+          credentials: true,
+        });
+        if (response.data.ok) {
+          toast.success("Staff member disabled successfully");
+          fetchStaff();
+        }
+      } else if (confirmInformation.mode === "Delete") {
+        const response = await Requests({
+          url: `/management/staff/${selectedStaff.staff_id}`,
+          method: "DELETE",
+          credentials: true,
+        });
+        if (response.data.ok) {
+          toast.success("Staff member deleted successfully");
+          fetchStaff();
+        }
+      }
+      closeConfirm();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to process action");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const closeModal = () => setShowModal(false);
@@ -92,7 +142,9 @@ function Staff() {
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric", month: "short", day: "2-digit",
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
     });
   };
 
@@ -101,17 +153,29 @@ function Staff() {
     if (!searchTerm) return true;
     return (
       staff.staff_id.toLowerCase().includes(searchTerm) ||
-      `${staff.first_name} ${staff.last_name}`.toLowerCase().includes(searchTerm) ||
+      `${staff.first_name} ${staff.last_name}`
+        .toLowerCase()
+        .includes(searchTerm) ||
       staff.email?.toLowerCase().includes(searchTerm)
     );
   });
 
-  const paginatedStaff = filteredStaff.slice((currentPage - 1) * entriesCount, currentPage * entriesCount);
+  const paginatedStaff = filteredStaff.slice(
+    (currentPage - 1) * entriesCount,
+    currentPage * entriesCount
+  );
   const totalPages = Math.ceil(filteredStaff.length / entriesCount);
 
   return (
     <div className="w-full bg-[#FDF8F1] min-h-screen pb-10">
-      {showModal && <AdminModal mode={modalMode} cancel={closeModal} />}
+      {showModal && (
+        <AdminModal
+          mode={modalMode}
+          cancel={closeModal}
+          staff={selectedStaff}
+          onSuccess={fetchStaff}
+        />
+      )}
       {showConfirm && (
         <ConfirmBox
           mode={confirmInformation.mode}
@@ -124,7 +188,6 @@ function Staff() {
       )}
 
       <section className="flex flex-col w-full px-4 md:px-8 pt-6 space-y-6 animate-in fade-in duration-500">
-        
         {/* header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-l-4 border-[#CD5C08] pl-6">
           <div>
@@ -144,7 +207,6 @@ function Staff() {
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-xl overflow-hidden w-full">
-          
           <div className="p-5 border-b border-gray-50 flex flex-col md:flex-row gap-4 items-center justify-between bg-white">
             <Form {...filterForm}>
               <div className="flex flex-col md:flex-row gap-4 items-center w-full">
@@ -166,15 +228,20 @@ function Staff() {
                     )}
                   />
                 </div>
-                
+
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-500">Show</span>
+                  <span className="text-sm font-medium text-gray-500">
+                    Show
+                  </span>
                   <FormField
                     control={filterForm.control}
                     name="count"
                     render={({ field }) => (
                       <FormItem>
-                        <Select onValueChange={field.onChange} defaultValue={field.value.toString()}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value.toString()}
+                        >
                           <FormControl>
                             <SelectTrigger className="w-20 h-11 border-gray-200 focus:ring-[#CD5C08]">
                               <SelectValue />
@@ -189,7 +256,9 @@ function Staff() {
                       </FormItem>
                     )}
                   />
-                  <span className="text-sm font-medium text-gray-500 text-nowrap">per page</span>
+                  <span className="text-sm font-medium text-gray-500 text-nowrap">
+                    per page
+                  </span>
                 </div>
               </div>
             </Form>
@@ -199,32 +268,50 @@ function Staff() {
             <Table className="w-full">
               <TableHeader className="bg-gray-50/50">
                 <TableRow className="hover:bg-transparent border-b border-gray-100">
-                  <TableHead className="font-bold text-gray-700 py-4 pl-6">STAFF ID</TableHead>
-                  <TableHead className="font-bold text-gray-700">FULL NAME</TableHead>
-                  <TableHead className="font-bold text-gray-700">JOINED DATE</TableHead>
-                  <TableHead className="font-bold text-gray-700">ACCOUNT STATUS</TableHead>
-                  <TableHead className="text-right font-bold text-gray-700 pr-6">ACTIONS</TableHead>
+                  <TableHead className="font-bold text-gray-700 py-4 pl-6">
+                    STAFF ID
+                  </TableHead>
+                  <TableHead className="font-bold text-gray-700">
+                    FULL NAME
+                  </TableHead>
+                  <TableHead className="font-bold text-gray-700">
+                    JOINED DATE
+                  </TableHead>
+                  <TableHead className="font-bold text-gray-700">
+                    ACCOUNT STATUS
+                  </TableHead>
+                  <TableHead className="text-right font-bold text-gray-700 pr-6">
+                    ACTIONS
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="h-64 text-center">
-                       <div className="flex flex-col items-center gap-3">
-                          <div className="w-10 h-10 border-4 border-[#CD5C08] border-t-transparent rounded-full animate-spin" />
-                          <p className="text-gray-400 font-medium">Fetching Personnel Records...</p>
-                       </div>
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-10 h-10 border-4 border-[#CD5C08] border-t-transparent rounded-full animate-spin" />
+                        <p className="text-gray-400 font-medium">
+                          Fetching Personnel Records...
+                        </p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : paginatedStaff.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-64 text-center text-gray-400 font-medium">
+                    <TableCell
+                      colSpan={5}
+                      className="h-64 text-center text-gray-400 font-medium"
+                    >
                       No staff members found.
                     </TableCell>
                   </TableRow>
                 ) : (
                   paginatedStaff.map((staff) => (
-                    <TableRow key={staff.staff_id} className="hover:bg-gray-50/30 transition-all">
+                    <TableRow
+                      key={staff.staff_id}
+                      className="hover:bg-gray-50/30 transition-all"
+                    >
                       <TableCell className="font-mono text-[#CD5C08] font-bold pl-6">
                         {staff.staff_id}
                       </TableCell>
@@ -242,45 +329,78 @@ function Staff() {
                         {formatDate(staff.date_created)}
                       </TableCell>
                       <TableCell>
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tighter ${
-                          staff.status === "active" 
-                          ? "bg-green-50 text-green-700 border border-green-100" 
-                          : "bg-red-50 text-red-700 border border-red-100"
-                        }`}>
-                          <div className={`w-1.5 h-1.5 rounded-full ${staff.status === "active" ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tighter ${
+                            staff.status === "active"
+                              ? "bg-green-50 text-green-700 border border-green-100"
+                              : "bg-red-50 text-red-700 border border-red-100"
+                          }`}
+                        >
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              staff.status === "active"
+                                ? "bg-green-500 animate-pulse"
+                                : "bg-red-500"
+                            }`}
+                          />
                           {staff.status}
                         </span>
                       </TableCell>
                       <TableCell className="text-right pr-6">
                         <DropdownMenu modal={false}>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-[#CD5C08]/10 hover:text-[#CD5C08] transition-colors cursor-pointer">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 rounded-full hover:bg-[#CD5C08]/10 hover:text-[#CD5C08] transition-colors cursor-pointer"
+                            >
                               <MoreHorizontalIcon className="h-5 w-5" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-52 p-2 shadow-2xl">
-                            <DropdownMenuLabel className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Operations</DropdownMenuLabel>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-52 p-2 shadow-2xl"
+                          >
+                            <DropdownMenuLabel className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">
+                              Operations
+                            </DropdownMenuLabel>
                             <DropdownMenuGroup>
                               {role === "admin" && (
-                                <DropdownMenuItem 
-                                  onClick={() => displayModal("edit")} 
+                                <DropdownMenuItem
+                                  onClick={() => displayModal("edit", staff)}
                                   className="group cursor-pointer focus:bg-[#CD5C08] focus:text-white rounded-md py-2 transition-colors"
                                 >
-                                  <UserCog className="mr-2 h-4 w-4 text-gray-500 group-focus:text-white transition-colors" /> 
+                                  <UserCog className="mr-2 h-4 w-4 text-gray-500 group-focus:text-white transition-colors" />
                                   Edit Profile
                                 </DropdownMenuItem>
                               )}
-                              <DropdownMenuItem 
-                                onClick={() => displayConfirm("Disable", "Restrict Access", "This user will immediately lose access to the staff portal.")}
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  displayConfirm(
+                                    "Disable",
+                                    "Restrict Access",
+                                    "This user will immediately lose access to the staff portal.",
+                                    staff
+                                  )
+                                }
                                 className="group cursor-pointer focus:bg-amber-600 focus:text-white rounded-md py-2 transition-colors"
                               >
-                                <ShieldAlert className="mr-2 h-4 w-4 text-gray-500 group-focus:text-white transition-colors" /> Disable Account
+                                <ShieldAlert className="mr-2 h-4 w-4 text-gray-500 group-focus:text-white transition-colors" />{" "}
+                                Disable Account
                               </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => displayConfirm("Delete", "Permanently Remove", "Warning: This action cannot be undone.")}
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  displayConfirm(
+                                    "Delete",
+                                    "Permanently Remove",
+                                    "Warning: This action cannot be undone.",
+                                    staff
+                                  )
+                                }
                                 className="group cursor-pointer focus:bg-red-600 focus:text-white rounded-md py-2 transition-colors"
                               >
-                                <UserCheck className="mr-2 h-4 w-4 text-gray-500 group-focus:text-white transition-colors" /> Delete Account
+                                <UserCheck className="mr-2 h-4 w-4 text-gray-500 group-focus:text-white transition-colors" />{" "}
+                                Delete Account
                               </DropdownMenuItem>
                             </DropdownMenuGroup>
                           </DropdownMenuContent>
@@ -296,15 +416,17 @@ function Staff() {
           {/* pagination */}
           <div className="p-5 border-t border-gray-50 flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-50/30">
             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-              Total Personnel: {filteredStaff.length} 
+              Total Personnel: {filteredStaff.length}
             </span>
             <Pagination className="mx-0 w-auto">
               <PaginationContent className="gap-2">
                 <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  <PaginationPrevious
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     className={`text-[#CD5C08] hover:text-white bg-white hover:bg-[#CD5C08] border-[#CD5C08] transition-colors shadow-sm h-10 px-4 rounded-md flex items-center ${
-                      currentPage === 1 ? "opacity-50 pointer-events-none" : "cursor-pointer"
+                      currentPage === 1
+                        ? "opacity-50 pointer-events-none"
+                        : "cursor-pointer"
                     }`}
                   />
                 </PaginationItem>
@@ -314,10 +436,14 @@ function Staff() {
                   </div>
                 </PaginationItem>
                 <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  <PaginationNext
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
                     className={`text-[#CD5C08] hover:text-white bg-white hover:bg-[#CD5C08] border-[#CD5C08] transition-colors shadow-sm h-10 px-4 rounded-md flex items-center ${
-                      currentPage === (totalPages || 1) ? "opacity-50 pointer-events-none" : "cursor-pointer"
+                      currentPage === (totalPages || 1)
+                        ? "opacity-50 pointer-events-none"
+                        : "cursor-pointer"
                     }`}
                   />
                 </PaginationItem>
