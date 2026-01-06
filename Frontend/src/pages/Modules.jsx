@@ -1,9 +1,16 @@
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGear, faMicrochip, faTowerBroadcast, faFan } from "@fortawesome/free-solid-svg-icons";
-import React from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft } from "lucide-react"
+import {
+  faGear,
+  faMicrochip,
+  faTowerBroadcast,
+  faFan,
+} from "@fortawesome/free-solid-svg-icons";
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import Requests from "@/utils/Requests";
+import { toast } from "sonner";
 
 const ModuleGroup = ({ title, items, icon, columns = "grid-cols-1" }) => (
   <div className="flex flex-col bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden h-full">
@@ -16,7 +23,7 @@ const ModuleGroup = ({ title, items, icon, columns = "grid-cols-1" }) => (
         {items.length} Units
       </span>
     </div>
-    
+
     <div className={`grid ${columns} gap-3 p-4`}>
       {items.map((item, i) => (
         <Button
@@ -29,11 +36,21 @@ const ModuleGroup = ({ title, items, icon, columns = "grid-cols-1" }) => (
           </div>
           <div className="flex flex-col items-start overflow-hidden text-left">
             <span className="text-sm font-bold text-gray-700 truncate w-full group-hover:text-white">
-              {item}
+              {item.label}
             </span>
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse group-hover:bg-white" />
-              <span className="text-[10px] text-gray-400 font-medium uppercase tracking-tighter group-hover:text-white/80">Active</span>
+              <span
+                className={`w-2 h-2 rounded-full animate-pulse group-hover:bg-white ${
+                  item.offline ? "bg-red-500" : "bg-green-500"
+                }`}
+              />
+              <span
+                className={`text-[10px] font-medium uppercase tracking-tighter ${
+                  item.offline ? "text-red-600" : "text-gray-400"
+                } group-hover:text-white/80`}
+              >
+                {item.offline ? "Offline" : "Active"}
+              </span>
             </div>
           </div>
         </Button>
@@ -43,54 +60,160 @@ const ModuleGroup = ({ title, items, icon, columns = "grid-cols-1" }) => (
 );
 
 function Modules() {
-  const params = useParams()
-  const navigate = useNavigate()
-  const id = params.user_id
-  
-  const microcontrollers = ["Arduino-Q", "ESP32-Filter", "ESP32-Chute", "ESP32-Grinder", "ESP32-Exaust"]
-  const sensors = ["Camera_A", "Camera_B", "Humidity", "Temperature", "Gas (Methane)", "Gas (Nitrogen)", "Water Level", "NPK Sensor", "Moisture"]
-  const motors = ["Servo_Lid_A", "Servo_Diverter", "Servo_Lid_B", "Motor_Grinder", "Motor_Mixer", "Exhaust Fan In", "Exhaust Fan Out"]
+  const params = useParams();
+  const navigate = useNavigate();
+  const repairId = params.user_id;
+
+  const componentCodes = [
+    "c1",
+    "c2",
+    "c3",
+    "c4",
+    "c5",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "s5",
+    "s6",
+    "s7",
+    "s8",
+    "s9",
+    "m1",
+    "m2",
+    "m3",
+    "m4",
+    "m5",
+    "m6",
+    "m7",
+  ];
+
+  const baseFlags = componentCodes.reduce((acc, code) => {
+    acc[code] = false;
+    return acc;
+  }, {});
+
+  const [componentFlags, setComponentFlags] = useState(baseFlags);
+
+  const microcontrollers = [
+    { code: "c1", label: "Arduino-Q" },
+    { code: "c2", label: "ESP32-Filter" },
+    { code: "c3", label: "ESP32-Chute" },
+    { code: "c4", label: "ESP32-Grinder" },
+    { code: "c5", label: "ESP32-Exhaust" },
+  ];
+
+  const sensors = [
+    { code: "s1", label: "Camera_A" },
+    { code: "s2", label: "Camera_B" },
+    { code: "s3", label: "Humidity" },
+    { code: "s4", label: "Temperature" },
+    { code: "s5", label: "Gas (Methane)" },
+    { code: "s6", label: "Gas (Nitrogen)" },
+    { code: "s7", label: "Water Level" },
+    { code: "s8", label: "NPK Sensor" },
+    { code: "s9", label: "Moisture" },
+  ];
+
+  const motors = [
+    { code: "m1", label: "Servo_Lid_A" },
+    { code: "m2", label: "Servo_Lid_B" },
+    { code: "m3", label: "Servo_Diverter" },
+    { code: "m4", label: "Motor_Grinder" },
+    { code: "m5", label: "Motor_Mixer" },
+    { code: "m6", label: "Exhaust Fan In" },
+    { code: "m7", label: "Exhaust Fan Out" },
+  ];
+
+  const mapStatuses = (items) =>
+    items.map((item) => ({
+      ...item,
+      offline: !!componentFlags[item.code],
+    }));
+
+  const fetchDiagnostics = async () => {
+    try {
+      const response = await Requests({
+        url: `/management/repair/${repairId}`,
+        method: "GET",
+        credentials: true,
+      });
+
+      if (response.data?.repair) {
+        const nextFlags = { ...baseFlags };
+
+        componentCodes.forEach((code) => {
+          nextFlags[code] = Boolean(response.data.repair[code]);
+        });
+
+        setComponentFlags(nextFlags);
+      }
+    } catch (error) {
+      toast.error("Failed to load diagnostics");
+    }
+  };
+
+  useEffect(() => {
+    fetchDiagnostics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [repairId]);
 
   return (
     <div className="flex flex-grow min-h-screen w-full bg-[#FDF8F1]">
-      
       <section className="flex-grow flex flex-col w-full max-w-[1600px] mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-500 pb-12">
-        
         {/* header */}
         <div className="flex items-center gap-4 border-l-4 border-[#CD5C08] pl-4">
-           <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => navigate(-1)} 
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
             className="rounded-full hover:bg-gray-200 hover:bg-[#CD5C08] border-[#CD5C08] cursor-pointer hover:text-white"
           >
             <ArrowLeft className="w-5 h-5 " />
           </Button>
           <div>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
-              Machine Diagnostics <span className="text-gray-400 font-light">|</span> <span className="text-[#CD5C08]">User #{id}</span>
+              Machine Diagnostics{" "}
+              <span className="text-gray-400 font-light">|</span>{" "}
+              <span className="text-[#CD5C08]">Request #{repairId}</span>
             </h1>
-            <p className="text-sm text-muted-foreground italic">Hardware component status and configuration mapping.</p>
+            <p className="text-sm text-muted-foreground italic">
+              Hardware component status and configuration mapping.
+            </p>
           </div>
         </div>
 
         {/* grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-3">
-            <ModuleGroup title="Microcontrollers" items={microcontrollers} icon={faMicrochip} />
+            <ModuleGroup
+              title="Microcontrollers"
+              items={mapStatuses(microcontrollers)}
+              icon={faMicrochip}
+            />
           </div>
 
           <div className="lg:col-span-5">
-            <ModuleGroup title="Sensors" items={sensors} icon={faTowerBroadcast} columns="grid-cols-1 sm:grid-cols-2" />
+            <ModuleGroup
+              title="Sensors"
+              items={mapStatuses(sensors)}
+              icon={faTowerBroadcast}
+              columns="grid-cols-1 sm:grid-cols-2"
+            />
           </div>
 
           <div className="lg:col-span-4">
-            <ModuleGroup title="Motors & Fans" items={motors} icon={faFan} columns="grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2" />
+            <ModuleGroup
+              title="Motors & Fans"
+              items={mapStatuses(motors)}
+              icon={faFan}
+              columns="grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2"
+            />
           </div>
         </div>
       </section>
     </div>
-  )
+  );
 }
 
-export default Modules
+export default Modules;

@@ -160,6 +160,7 @@ function Machines() {
     return (
       repair.repair_id.toLowerCase().includes(searchTerm) ||
       repair.machine_id?.toLowerCase().includes(searchTerm) ||
+      repair.description?.toLowerCase().includes(searchTerm) ||
       false ||
       fullName.includes(searchTerm)
     );
@@ -283,6 +284,9 @@ function Machines() {
                     Name
                   </TableHead>
                   <TableHead className="font-bold text-gray-700 uppercase text-xs tracking-wider">
+                    Description
+                  </TableHead>
+                  <TableHead className="font-bold text-gray-700 uppercase text-xs tracking-wider">
                     Status
                   </TableHead>
                   <TableHead className="font-bold text-gray-700 uppercase text-xs tracking-wider">
@@ -296,7 +300,7 @@ function Machines() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-64 text-center">
+                    <TableCell colSpan={8} className="h-64 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-10 h-10 border-4 border-[#CD5C08] border-t-transparent rounded-full animate-spin" />
                         <p className="text-gray-400 font-medium">
@@ -308,7 +312,7 @@ function Machines() {
                 ) : paginatedRepairs.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className="h-64 text-center text-gray-400 font-medium"
                     >
                       No repair requests found.
@@ -334,6 +338,9 @@ function Machines() {
                         {repair.first_name && repair.last_name
                           ? `${repair.first_name} ${repair.last_name}`
                           : "Unassigned"}
+                      </TableCell>
+                      <TableCell className="text-gray-700 text-sm max-w-xs">
+                        {repair.description || "No description"}
                       </TableCell>
                       <TableCell>
                         <span

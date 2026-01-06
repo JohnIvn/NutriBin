@@ -22,7 +22,53 @@ type RepairRow = {
   date_created: string;
   first_name?: string | null;
   last_name?: string | null;
+  description?: string | null;
+  c1?: boolean;
+  c2?: boolean;
+  c3?: boolean;
+  c4?: boolean;
+  c5?: boolean;
+  s1?: boolean;
+  s2?: boolean;
+  s3?: boolean;
+  s4?: boolean;
+  s5?: boolean;
+  s6?: boolean;
+  s7?: boolean;
+  s8?: boolean;
+  s9?: boolean;
+  m1?: boolean;
+  m2?: boolean;
+  m3?: boolean;
+  m4?: boolean;
+  m5?: boolean;
+  m6?: boolean;
+  m7?: boolean;
 };
+
+const repairComponentColumns = [
+  'c1',
+  'c2',
+  'c3',
+  'c4',
+  'c5',
+  's1',
+  's2',
+  's3',
+  's4',
+  's5',
+  's6',
+  's7',
+  's8',
+  's9',
+  'm1',
+  'm2',
+  'm3',
+  'm4',
+  'm5',
+  'm6',
+  'm7',
+] as const;
 
 @Controller('management/repair')
 export class RepairManagementController {
@@ -34,7 +80,7 @@ export class RepairManagementController {
 
     try {
       const result = await client.query<RepairRow>(
-        `SELECT repair_id, user_id, machine_id, repair_status, date_created, first_name, last_name
+        `SELECT repair_id, user_id, machine_id, repair_status, date_created, first_name, last_name, description
          FROM repair
          ORDER BY date_created DESC`,
       );
@@ -54,7 +100,7 @@ export class RepairManagementController {
 
     try {
       const result = await client.query<RepairRow>(
-        `SELECT repair_id, user_id, machine_id, repair_status, date_created, first_name, last_name
+        `SELECT repair_id, user_id, machine_id, repair_status, date_created, first_name, last_name, description, ${repairComponentColumns.join(', ')}
          FROM repair
          WHERE repair_id = $1`,
         [id],
