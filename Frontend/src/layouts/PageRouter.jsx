@@ -67,11 +67,42 @@ function PageRouter() {
           </ProtectedRoute>
         }
       />
-      <Route path="/about" element={<About />} />
-      <Route path="/faqs" element={<Faqs />} />
-      <Route path="/policies" element={<Tos />} />
-      <Route path="/socials" element={<Socials />} />
-      <Route path="/studies" element={<Studies />} />
+      <Route
+        path="/about"
+        element={
+            <About />
+        }
+      />
+      <Route
+        path="/faqs"
+        element={
+            <Faqs />
+        }
+      />
+      <Route
+        path="/policies"
+        element={
+            <Tos />
+        }
+      />
+      <Route
+        path="/socials"
+        element={
+            <Socials />
+        }
+      />
+      <Route
+        path="/studies"
+        element={
+            <Studies />
+        }
+      />
+      <Route
+        path="/guides"
+        element={
+            <Studies />
+        }
+      />    
     </Routes>
   );
 }
