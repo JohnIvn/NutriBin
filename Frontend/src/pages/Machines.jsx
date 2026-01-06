@@ -1,240 +1,456 @@
 import {
-	Table,
-	TableBody,
-	TableCaption,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table"
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectLabel,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select"
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog"
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuGroup,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import React, { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { MoreHorizontalIcon } from "lucide-react"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
-	Pagination,
-	PaginationContent,
-	PaginationEllipsis,
-	PaginationItem,
-	PaginationLink,
-	PaginationNext,
-	PaginationPrevious,
-} from "@/components/ui/pagination"
-import { machinesFilter } from "@/schema/machines"
-import { useNavigate } from "react-router-dom"
-import ConfirmBox from "@/components/partials/confirmBox"
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { MoreHorizontalIcon } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { machinesFilter } from "@/schema/machines";
+import { useNavigate } from "react-router-dom";
+import ConfirmBox from "@/components/partials/confirmBox";
+import Requests from "@/utils/Requests";
+import { toast } from "sonner";
+
 function Machines() {
-	const navigate = useNavigate()
+  const navigate = useNavigate();
 
-	const [showConfirm, setShowConfirm] = useState(false)
-	const [confirmInformation, setConfirmInformation] = useState({
-		title: "",
-		description: ""
-	})
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmInformation, setConfirmInformation] = useState({
+    title: "",
+    description: "",
+    mode: "",
+    repairId: null,
+    status: null,
+  });
+  const [repairs, setRepairs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-	const filterForm = useForm({
-		resolver: zodResolver(machinesFilter),
-		defaultValues: {
-			count: "10",
-			term: "",
-		},
-	});
+  const filterForm = useForm({
+    resolver: zodResolver(machinesFilter),
+    defaultValues: {
+      count: "10",
+      term: "",
+    },
+  });
 
-	const displayConfirm = (mode, title, description) => {
-		setShowConfirm(true)
-		setConfirmInformation({
-			mode: mode,
-			title: title,
-			description: description
-		})
-	}
+  const displayConfirm = (
+    mode,
+    title,
+    description,
+    repairId,
+    status = null
+  ) => {
+    setShowConfirm(true);
+    setConfirmInformation({
+      mode: mode,
+      title: title,
+      description: description,
+      repairId: repairId,
+      status: status,
+    });
+  };
 
-	const onConfirm = () => {
-		// TODO
-		console.log("Confirmed")
-	}
-	
-	const closeConfirm = () => {
-		setShowConfirm(false)
-	}
+  const onConfirm = () => {
+    const { mode, repairId, status } = confirmInformation;
 
-	const entriesCount = parseInt(filterForm.watch("count") || "10");
+    if (mode === "status") {
+      handleStatusUpdate(repairId, status);
+    } else if (mode === "delete") {
+      handleDeleteRepair(repairId);
+    }
 
-	function filterSubmit() {
-		console.log("Filtration")
-	}
+    closeConfirm();
+  };
 
-	function navigateModules(id) {
-		navigate(`/machines/${id}`)
-	}
+  const closeConfirm = () => {
+    setShowConfirm(false);
+    setConfirmInformation({
+      title: "",
+      description: "",
+      mode: "",
+      repairId: null,
+      status: null,
+    });
+  };
 
-	return (
-		<>
-			{showConfirm &&
-				<ConfirmBox mode={confirmInformation.modal} cancel={closeConfirm} confirm={onConfirm} description={confirmInformation.description} title={confirmInformation.title} />
-			}
-			<section className='flex flex-col h-auto my-auto pb-4'>
-				<h1 className='text-3xl md:text-5xl font-medium my-4 text-center'>Machine Repairs</h1>
-				<Table className={'flex flex-col h-auto w-auto xl:w-5xl border-2'}>
-					<TableCaption className={'flex w-full justify-between px-2'}>
-						<Form {...filterForm}>
-							<form onSubmit={filterForm.handleSubmit(filterSubmit)} className="flex justify-between items-center gap-4">
-								<div className="flex items-center justify-center gap-2">
-									<p className="font-medium text-xs md:text-sm">Show</p>
+  const entriesCount = parseInt(filterForm.watch("count") || "10");
 
-									<FormField
-										control={filterForm.control}
-										name="count"
-										render={({ field }) => (
-											<FormItem>
-												<Select onValueChange={field.onChange} defaultValue={field.value.toString()} >
-													<FormControl>
-														<SelectTrigger className="w-auto text-xs md:text-sm">
-															<SelectValue placeholder="Select count" />
-														</SelectTrigger>
-													</FormControl>
-													<SelectContent>
-														<SelectGroup>
-															<SelectLabel>Entries</SelectLabel>
-															<SelectItem value="10">10</SelectItem>
-															<SelectItem value="15">15</SelectItem>
-															<SelectItem value="20">20</SelectItem>
-															<SelectItem value="25">25</SelectItem>
-															<SelectItem value="30">30</SelectItem>
-														</SelectGroup>
-													</SelectContent>
-												</Select>
-											</FormItem>
-										)}
-									/>
+  useEffect(() => {
+    fetchRepairs();
+  }, []);
 
-									<p className="font-medium text-xs md:text-sm">Entries</p>
-									<FormField
-										control={filterForm.control}
-										name="term"
-										render={({ field }) => (
-											<FormItem>
-												<FormControl>
-													<Input placeholder="Search" className={'border border-secondary-foreground w-auto md:w-lg'} {...field} />
-												</FormControl>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
-								</div>
-							</form>
-						</Form>
-					</TableCaption>
-					<TableHeader>
-						<TableRow className={'flex items-center'}>
-							<TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">Request ID</TableHead>
-							<TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">Machine ID</TableHead>
-							<TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">Owner</TableHead>
-							<TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">Description</TableHead>
-							<TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">Date</TableHead>
-							<TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">Actions</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{Array.from({ length: entriesCount }).map((item, index) => (
-							<TableRow
-								key={index}
-								className="flex items-center cursor-pointer"
-								onClick={() => navigateModules(index)}
-							>
-								<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">R3211</TableCell>
-								<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">1</TableCell>
-								<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">James Jones</TableCell>
-								<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">Broken Blender Motor</TableCell>
-								<TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">12-12-2023</TableCell>
-								<TableCell
-									className="flex flex-1 h-10 items-center text-xs md:text-sm"
-									onClick={(e) => e.stopPropagation()}>
-									<DropdownMenu modal={false}>
-										<DropdownMenuTrigger asChild>
-											<Button className="text-white" variant="outline" aria-label="Open menu" size="icon-sm">
-												<MoreHorizontalIcon />
-											</Button>
-										</DropdownMenuTrigger>
-										<DropdownMenuContent className="w-40" align="end">
-											<DropdownMenuLabel>Actions</DropdownMenuLabel>
-											<DropdownMenuGroup>
-												<DropdownMenuItem
-													onClick={() => displayConfirm("Resolve", "Resolve Report", "Are you sure you want to resolve the machine repair feedback?")}
-												>
-													Resolve</DropdownMenuItem>
-												<DropdownMenuItem
-													onClick={() => displayConfirm("Accept", "Accepting Machine Report", "Are you sure you want to accept the given task for the machine repair?")}
-												>
-													Accept</DropdownMenuItem>
-												<DropdownMenuItem
-													onClick={() => displayConfirm("Reject", "Rejecting Machine Report", "Are you sure you want to reject the task for the machine repair feedback?")}
-												>
-													Reject</DropdownMenuItem>
-											</DropdownMenuGroup>
-										</DropdownMenuContent>
-									</DropdownMenu>
-								</TableCell>
-							</TableRow>
-						))}
-					</TableBody>
-					<Pagination>
-						<PaginationContent>
-							<PaginationItem>
-								<PaginationPrevious href="#" />
-							</PaginationItem>
-							<PaginationItem>
-								<PaginationLink href="#">1</PaginationLink>
-							</PaginationItem>
-							<PaginationItem>
-								<PaginationLink href="#" isActive>
-									2
-								</PaginationLink>
-							</PaginationItem>
-							<PaginationItem>
-								<PaginationLink href="#">3</PaginationLink>
-							</PaginationItem>
-							<PaginationItem>
-								<PaginationEllipsis />
-							</PaginationItem>
-							<PaginationItem>
-								<PaginationNext href="#" />
-							</PaginationItem>
-						</PaginationContent>
-					</Pagination>
-				</Table>
-			</section >
-		</>
-	)
+  async function fetchRepairs() {
+    try {
+      setLoading(true);
+      const response = await Requests({
+        url: "/management/repair",
+        method: "GET",
+        credentials: true,
+      });
+
+      if (response.data.ok) {
+        setRepairs(response.data.repairs);
+      }
+    } catch (error) {
+      console.error("Error fetching repairs:", error);
+      toast.error("Failed to load repair data");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleStatusUpdate(repairId, status) {
+    try {
+      const response = await Requests({
+        url: `/management/repair/${repairId}/status`,
+        method: "PATCH",
+        data: { status },
+        credentials: true,
+      });
+
+      if (response.data.ok) {
+        toast.success(`Repair ${status} successfully`);
+        fetchRepairs();
+      }
+    } catch (error) {
+      console.error("Error updating repair status:", error);
+      toast.error("Failed to update repair status");
+    }
+  }
+
+  async function handleDeleteRepair(repairId) {
+    try {
+      const response = await Requests({
+        url: `/management/repair/${repairId}`,
+        method: "DELETE",
+        credentials: true,
+      });
+
+      if (response.data.ok) {
+        toast.success("Repair deleted successfully");
+        fetchRepairs();
+      }
+    } catch (error) {
+      console.error("Error deleting repair:", error);
+      toast.error("Failed to delete repair");
+    }
+  }
+
+  function filterSubmit() {
+    console.log("Filtration");
+  }
+
+  function navigateModules(id) {
+    navigate(`/machines/${id}`);
+  }
+
+  return (
+    <>
+      {showConfirm && (
+        <ConfirmBox
+          mode={confirmInformation.modal}
+          cancel={closeConfirm}
+          confirm={onConfirm}
+          description={confirmInformation.description}
+          title={confirmInformation.title}
+        />
+      )}
+      <section className="flex flex-col h-auto my-auto pb-4">
+        <h1 className="text-3xl md:text-5xl font-medium my-4 text-center">
+          Machine Repairs
+        </h1>
+        <Table className={"flex flex-col h-auto w-auto xl:w-5xl border-2"}>
+          <TableCaption className={"flex w-full justify-between px-2"}>
+            <Form {...filterForm}>
+              <form
+                onSubmit={filterForm.handleSubmit(filterSubmit)}
+                className="flex justify-between items-center gap-4"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <p className="font-medium text-xs md:text-sm">Show</p>
+
+                  <FormField
+                    control={filterForm.control}
+                    name="count"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value.toString()}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-auto text-xs md:text-sm">
+                              <SelectValue placeholder="Select count" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>Entries</SelectLabel>
+                              <SelectItem value="10">10</SelectItem>
+                              <SelectItem value="15">15</SelectItem>
+                              <SelectItem value="20">20</SelectItem>
+                              <SelectItem value="25">25</SelectItem>
+                              <SelectItem value="30">30</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+
+                  <p className="font-medium text-xs md:text-sm">Entries</p>
+                  <FormField
+                    control={filterForm.control}
+                    name="term"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            placeholder="Search"
+                            className={
+                              "border border-secondary-foreground w-auto md:w-lg"
+                            }
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </form>
+            </Form>
+          </TableCaption>
+          <TableHeader>
+            <TableRow className={"flex items-center"}>
+              <TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">
+                Repair ID
+              </TableHead>
+              <TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">
+                Machine ID
+              </TableHead>
+              <TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">
+                User ID
+              </TableHead>
+              <TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">
+                Date
+              </TableHead>
+              <TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">
+                Status
+              </TableHead>
+              <TableHead className="flex flex-1 h-10 items-center text-xs md:text-sm">
+                Actions
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow className="flex items-center">
+                <TableCell
+                  colSpan={6}
+                  className="flex flex-1 h-10 items-center justify-center text-xs md:text-sm"
+                >
+                  Loading...
+                </TableCell>
+              </TableRow>
+            ) : repairs.length === 0 ? (
+              <TableRow className="flex items-center">
+                <TableCell
+                  colSpan={6}
+                  className="flex flex-1 h-10 items-center justify-center text-xs md:text-sm"
+                >
+                  No repairs found
+                </TableCell>
+              </TableRow>
+            ) : (
+              repairs.slice(0, entriesCount).map((repair) => (
+                <TableRow
+                  key={repair.repair_id}
+                  className="flex items-center cursor-pointer"
+                  onClick={() => navigateModules(repair.repair_id)}
+                >
+                  <TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">
+                    {repair.repair_id.substring(0, 8)}
+                  </TableCell>
+                  <TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">
+                    {repair.machine_id || "N/A"}
+                  </TableCell>
+                  <TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">
+                    {repair.user_id ? repair.user_id.substring(0, 8) : "N/A"}
+                  </TableCell>
+                  <TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">
+                    {new Date(repair.date_created).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="flex flex-1 h-10 items-center text-xs md:text-sm">
+                    <span
+                      className={`px-2 py-1 rounded text-xs ${
+                        repair.repair_status === "active"
+                          ? "bg-green-100 text-green-800"
+                          : repair.repair_status === "cancelled"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {repair.repair_status}
+                    </span>
+                  </TableCell>
+                  <TableCell
+                    className="flex flex-1 h-10 items-center text-xs md:text-sm"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          className="text-white"
+                          variant="outline"
+                          aria-label="Open menu"
+                          size="icon-sm"
+                        >
+                          <MoreHorizontalIcon />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-40" align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              displayConfirm(
+                                "status",
+                                "Mark as Active",
+                                "Are you sure you want to mark this repair as active?",
+                                repair.repair_id,
+                                "active"
+                              )
+                            }
+                          >
+                            Mark Active
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              displayConfirm(
+                                "status",
+                                "Postpone Repair",
+                                "Are you sure you want to postpone this repair?",
+                                repair.repair_id,
+                                "postponed"
+                              )
+                            }
+                          >
+                            Postpone
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              displayConfirm(
+                                "status",
+                                "Cancel Repair",
+                                "Are you sure you want to cancel this repair?",
+                                repair.repair_id,
+                                "cancelled"
+                              )
+                            }
+                          >
+                            Cancel
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              displayConfirm(
+                                "delete",
+                                "Delete Repair",
+                                "Are you sure you want to permanently delete this repair? This action cannot be undone.",
+                                repair.repair_id
+                              )
+                            }
+                            className="text-red-600"
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious href="#" />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink href="#">1</PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink href="#" isActive>
+                  2
+                </PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink href="#">3</PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationEllipsis />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext href="#" />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </Table>
+      </section>
+    </>
+  );
 }
 
-export default Machines
+export default Machines;
