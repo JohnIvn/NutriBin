@@ -11,7 +11,7 @@ export async function createUserStaffArchiveTable(client: Client) {
     $$;
   `);
   await client.query(`
-    CREATE TABLE IF NOT EXISTS user_staff (
+    CREATE TABLE IF NOT EXISTS user_staff_archive (
       staff_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
       first_name text NOT NULL,
       last_name text NOT NULL,

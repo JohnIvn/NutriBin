@@ -500,7 +500,7 @@ export class StaffManagementController {
     try {
       // First check if the staff member exists
       const checkResult = await client.query(
-        'SELECT staff_id FROM user_staff WHERE staff_id = $1',
+        'SELECT * FROM user_staff WHERE staff_id = $1',
         [staffId],
       );
 
@@ -508,20 +508,43 @@ export class StaffManagementController {
         throw new NotFoundException('Staff member not found');
       }
 
-      // Delete the staff member
+      const staff = checkResult.rows[0];
+
+      // Move staff to archive table
+      await client.query(
+        `INSERT INTO user_staff_archive 
+         (staff_id, first_name, last_name, birthday, age, contact_number, address, email, password, date_created, last_updated, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [
+          staff.staff_id,
+          staff.first_name,
+          staff.last_name,
+          staff.birthday,
+          staff.age,
+          staff.contact_number,
+          staff.address,
+          staff.email,
+          staff.password,
+          staff.date_created,
+          staff.last_updated,
+          staff.status,
+        ],
+      );
+
+      // Delete the staff member from active table
       await client.query('DELETE FROM user_staff WHERE staff_id = $1', [
         staffId,
       ]);
 
       return {
         ok: true,
-        message: 'Staff member deleted successfully',
+        message: 'Staff member archived successfully',
       };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException('Failed to delete staff member');
+      throw new InternalServerErrorException('Failed to archive staff member');
     }
   }
 }

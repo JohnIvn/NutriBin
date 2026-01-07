@@ -57,8 +57,13 @@ export default function Header() {
                 </Button>
               )}
               <Button asChild className={"bg-transparent hover:bg-amber-700"}>
-                <Link to={"/users"}>Users</Link>
+                <Link to={"users"}>Users</Link>
               </Button>
+              {user.role === "admin" && (
+                <Button asChild className={"bg-transparent hover:bg-amber-700"}>
+                  <Link to={"/archives"}>Archives</Link>
+                </Button>
+              )}
               <Button asChild className={"bg-transparent hover:bg-amber-700"}>
                 <Link to={"/machines"}>Repairs</Link>
               </Button>

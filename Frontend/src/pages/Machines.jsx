@@ -362,71 +362,77 @@ function Machines() {
                         className="text-right pr-6"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <DropdownMenu modal={false}>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9 rounded-full hover:bg-[#CD5C08]/10 hover:text-[#CD5C08] transition-colors cursor-pointer"
+                        {repair.repair_status === "cancelled" ? (
+                          <span className="text-xs text-gray-400 italic">
+                            No actions
+                          </span>
+                        ) : (
+                          <DropdownMenu modal={false}>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-9 w-9 rounded-full hover:bg-[#CD5C08]/10 hover:text-[#CD5C08] transition-colors cursor-pointer"
+                              >
+                                <MoreHorizontalIcon className="h-5 w-5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              className="w-52 p-2 shadow-2xl border-gray-100"
                             >
-                              <MoreHorizontalIcon className="h-5 w-5" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="w-52 p-2 shadow-2xl border-gray-100"
-                          >
-                            <DropdownMenuLabel className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">
-                              Maintenance Ops
-                            </DropdownMenuLabel>
-                            <DropdownMenuGroup>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  displayConfirm(
-                                    "Resolve",
-                                    "Resolve Report",
-                                    "Mark this repair request as resolved.",
-                                    repair
-                                  )
-                                }
-                                className="group cursor-pointer focus:bg-green-600 focus:text-white font-medium rounded-md py-2 transition-colors mb-1"
-                              >
-                                <CheckCircle2 className="mr-2 h-4 w-4 text-gray-500 group-focus:text-white transition-colors" />{" "}
-                                Resolve
-                              </DropdownMenuItem>
+                              <DropdownMenuLabel className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">
+                                Maintenance Ops
+                              </DropdownMenuLabel>
+                              <DropdownMenuGroup>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    displayConfirm(
+                                      "Resolve",
+                                      "Resolve Report",
+                                      "Mark this repair request as resolved.",
+                                      repair
+                                    )
+                                  }
+                                  className="group cursor-pointer focus:bg-green-600 focus:text-white font-medium rounded-md py-2 transition-colors mb-1"
+                                >
+                                  <CheckCircle2 className="mr-2 h-4 w-4 text-gray-500 group-focus:text-white transition-colors" />{" "}
+                                  Resolve
+                                </DropdownMenuItem>
 
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  displayConfirm(
-                                    "Accept",
-                                    "Accepting Report",
-                                    "Accept this repair request and begin work.",
-                                    repair
-                                  )
-                                }
-                                className="group cursor-pointer focus:bg-[#CD5C08] focus:text-white font-medium rounded-md py-2 transition-colors mb-1"
-                              >
-                                <Wrench className="mr-2 h-4 w-4 text-gray-500 group-focus:text-white transition-colors" />{" "}
-                                Accept
-                              </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    displayConfirm(
+                                      "Accept",
+                                      "Accepting Report",
+                                      "Accept this repair request and begin work.",
+                                      repair
+                                    )
+                                  }
+                                  className="group cursor-pointer focus:bg-[#CD5C08] focus:text-white font-medium rounded-md py-2 transition-colors mb-1"
+                                >
+                                  <Wrench className="mr-2 h-4 w-4 text-gray-500 group-focus:text-white transition-colors" />{" "}
+                                  Accept
+                                </DropdownMenuItem>
 
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  displayConfirm(
-                                    "Reject",
-                                    "Rejecting Report",
-                                    "Reject this repair request.",
-                                    repair
-                                  )
-                                }
-                                className="group cursor-pointer focus:bg-red-600 focus:text-white font-medium rounded-md py-2 transition-colors"
-                              >
-                                <XCircle className="mr-2 h-4 w-4 text-gray-500 group-focus:text-white transition-colors" />{" "}
-                                Reject
-                              </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    displayConfirm(
+                                      "Reject",
+                                      "Rejecting Report",
+                                      "Reject this repair request.",
+                                      repair
+                                    )
+                                  }
+                                  className="group cursor-pointer focus:bg-red-600 focus:text-white font-medium rounded-md py-2 transition-colors"
+                                >
+                                  <XCircle className="mr-2 h-4 w-4 text-gray-500 group-focus:text-white transition-colors" />{" "}
+                                  Reject
+                                </DropdownMenuItem>
+                              </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))

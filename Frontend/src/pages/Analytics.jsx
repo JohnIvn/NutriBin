@@ -178,7 +178,7 @@ function Analytics() {
             </Card>
 
             {/* system status */}
-            <Card className="bg-[#1a1a1a] border-none shadow-2xl text-white">
+            <Card className="bg-[#1a1a1a] border-none shadow-2xl text-white bg-white">
                <CardHeader className="pb-2 pt-4 px-4">
                  <CardTitle className="text-[11px] uppercase tracking-tighter text-gray-400 font-bold flex items-center gap-2">
                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />

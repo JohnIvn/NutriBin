@@ -467,7 +467,7 @@ export class UserManagementController {
     try {
       // First check if the user exists
       const checkResult = await client.query(
-        'SELECT customer_id FROM user_customer WHERE customer_id = $1',
+        'SELECT * FROM user_customer WHERE customer_id = $1',
         [customerId],
       );
 
@@ -475,20 +475,41 @@ export class UserManagementController {
         throw new NotFoundException('User not found');
       }
 
-      // Delete the user
+      const user = checkResult.rows[0];
+
+      // Move user to archive table
+      await client.query(
+        `INSERT INTO user_customer_archive 
+         (customer_id, first_name, last_name, contact_number, address, email, password, date_created, last_updated, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [
+          user.customer_id,
+          user.first_name,
+          user.last_name,
+          user.contact_number,
+          user.address,
+          user.email,
+          user.password,
+          user.date_created,
+          user.last_updated,
+          user.status,
+        ],
+      );
+
+      // Delete the user from active table
       await client.query('DELETE FROM user_customer WHERE customer_id = $1', [
         customerId,
       ]);
 
       return {
         ok: true,
-        message: 'User deleted successfully',
+        message: 'User archived successfully',
       };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException('Failed to delete user');
+      throw new InternalServerErrorException('Failed to archive user');
     }
   }
 }
