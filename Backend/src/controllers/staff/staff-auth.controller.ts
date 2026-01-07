@@ -1,6 +1,10 @@
 import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
 import { StaffAuthService } from '../../service/auth/staff-auth.service';
-import type { StaffSignInDto, StaffSignUpDto } from './staff-auth.dto';
+import type {
+  GoogleSignInDto,
+  StaffSignInDto,
+  StaffSignUpDto,
+} from './staff-auth.dto';
 
 @Controller('staff')
 export class StaffAuthController {
@@ -23,5 +27,14 @@ export class StaffAuthController {
     }
 
     return this.staffAuthService.signIn(body);
+  }
+
+  @Post('google-signin')
+  async googleSignIn(@Body() body: GoogleSignInDto) {
+    if (!body || !body.credential) {
+      throw new BadRequestException('Google credential is required');
+    }
+
+    return this.staffAuthService.googleSignIn(body.credential);
   }
 }
