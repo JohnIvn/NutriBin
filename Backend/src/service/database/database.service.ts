@@ -14,6 +14,7 @@ import { createModuleAnalyticsTable } from './models/module-analytics.model';
 import { createRepairTable } from './models/repair.module';
 import { createUserStaffArchiveTable } from './models/user-staff-archive.model';
 import { createUserCustomerArchiveTable } from './models/user-customer-archive.model';
+import { createAuthenticationTable } from './models/authentication';
 
 dotenv.config();
 
@@ -61,6 +62,7 @@ export class DatabaseService implements OnModuleInit {
     await createRepairTable(this.client);
     await createUserStaffArchiveTable(this.client);
     await createUserCustomerArchiveTable(this.client);
+    await createAuthenticationTable(this.client);
 
     console.log(chalk.bgGreen.black('[SUPABASE] All tables are ready!'));
   }
