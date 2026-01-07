@@ -44,6 +44,8 @@ function Account() {
   const [resetSubmitting, setResetSubmitting] = useState(false);
   const [closingAccount, setClosingAccount] = useState(false);
   const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
+  const [mfaType, setMfaType] = useState("N/A");
+  const [mfaLoading, setMfaLoading] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(adminAccount),
@@ -61,6 +63,7 @@ function Account() {
     const userId = user?.staff_id || user?.admin_id;
     if (userId) {
       fetchProfile();
+      fetchMFASettings();
     } else {
       setLoading(false);
     }
@@ -98,6 +101,54 @@ function Account() {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMFASettings = async () => {
+    const userId = user?.staff_id || user?.admin_id;
+    if (!userId) return;
+
+    try {
+      const response = await Requests({
+        url: `/authentication/${userId}/mfa`,
+        method: "GET",
+        credentials: true,
+      });
+
+      if (response.data.ok) {
+        setMfaType(response.data.mfaType || "N/A");
+      }
+    } catch (error) {
+      console.error("Failed to load MFA settings", error);
+    }
+  };
+
+  const handleMFAChange = async (newMfaType) => {
+    const userId = user?.staff_id || user?.admin_id;
+    if (!userId) return;
+
+    try {
+      setMfaLoading(true);
+      const response = await Requests({
+        url: `/authentication/${userId}/mfa`,
+        method: "PATCH",
+        data: { mfaType: newMfaType },
+        credentials: true,
+      });
+
+      if (response.data.ok) {
+        setMfaType(newMfaType);
+        toast.success(
+          `MFA set to ${newMfaType === "N/A" ? "Disabled" : "Email"}`
+        );
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to update MFA settings"
+      );
+      console.error(error);
+    } finally {
+      setMfaLoading(false);
     }
   };
 
@@ -642,6 +693,58 @@ function Account() {
             >
               {closingAccount ? "Closing..." : "Close"}
             </Button>
+          </div>
+
+          <div className="flex flex-col justify-center items-start h-auto p-6 gap-4 bg-white border border-gray-100 shadow-lg shadow-gray-200 rounded-lg">
+            <h1 className="text-lg font-bold tracking-tight text-black w-full">
+              Multi-Factor Authentication
+            </h1>
+            <hr className="w-full border-gray-100" />
+            <p className="text-gray-500 text-sm leading-relaxed w-full">
+              Add an extra layer of security to your account. When enabled,
+              you'll need to verify your identity via email when logging in.
+            </p>
+            <div className="w-full space-y-3">
+              <div className="flex items-center space-x-2 p-3 rounded-md border border-gray-200 hover:bg-amber-50 cursor-pointer transition-colors">
+                <input
+                  type="radio"
+                  id="mfa-disabled"
+                  name="mfa"
+                  value="N/A"
+                  checked={mfaType === "N/A"}
+                  onChange={() => handleMFAChange("N/A")}
+                  disabled={mfaLoading}
+                  className="cursor-pointer"
+                />
+                <label htmlFor="mfa-disabled" className="cursor-pointer flex-1">
+                  <div className="font-medium text-gray-900">Disabled</div>
+                  <div className="text-xs text-gray-500">
+                    No additional security
+                  </div>
+                </label>
+              </div>
+              <div className="flex items-center space-x-2 p-3 rounded-md border border-gray-200 hover:bg-amber-50 cursor-pointer transition-colors">
+                <input
+                  type="radio"
+                  id="mfa-email"
+                  name="mfa"
+                  value="email"
+                  checked={mfaType === "email"}
+                  onChange={() => handleMFAChange("email")}
+                  disabled={mfaLoading}
+                  className="cursor-pointer"
+                />
+                <label htmlFor="mfa-email" className="cursor-pointer flex-1">
+                  <div className="font-medium text-gray-900">
+                    Email Verification
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Requires email verification on login
+                  </div>
+                </label>
+              </div>
+            </div>
+            {mfaLoading && <p className="text-xs text-gray-400">Updating...</p>}
           </div>
 
           <Dialog open={closeConfirmOpen} onOpenChange={setCloseConfirmOpen}>

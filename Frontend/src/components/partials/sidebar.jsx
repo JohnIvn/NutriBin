@@ -110,7 +110,9 @@ export default function Sidebar() {
           )}
         </Link>
         <div
-          className={`mt-3 ${shouldCollapse ? "flex justify-center" : "text-right"}`}
+          className={`mt-3 ${
+            shouldCollapse ? "flex justify-center" : "text-right"
+          }`}
         >
           <button
             onClick={() => setCollapsed((c) => !c)}
@@ -176,7 +178,9 @@ export default function Sidebar() {
         )}
       </nav>
 
-      <div className={`${shouldCollapse ? "px-1" : "px-3"} py-3 mt-auto space-y-3`}>
+      <div
+        className={`${shouldCollapse ? "px-1" : "px-3"} py-3 mt-auto space-y-3`}
+      >
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -198,7 +202,10 @@ export default function Sidebar() {
           <DropdownMenuContent align="start" className="w-48">
             <DropdownMenuLabel>Sidebar Mode</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuRadioGroup value={sidebarMode} onValueChange={setSidebarMode}>
+            <DropdownMenuRadioGroup
+              value={sidebarMode}
+              onValueChange={setSidebarMode}
+            >
               <DropdownMenuRadioItem value="expanded">
                 Expanded
               </DropdownMenuRadioItem>

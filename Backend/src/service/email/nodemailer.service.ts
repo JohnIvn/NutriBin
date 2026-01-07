@@ -25,6 +25,68 @@ export class NodemailerService {
     this.initializeTransporter();
   }
 
+  /**
+   * Generate a consistent email template with NutriBin branding
+   * @param content The main content HTML
+   * @param title Optional title for the email
+   */
+  private getEmailTemplate(content: string, title?: string): string {
+    return `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${title || 'NutriBin'}</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #FFF5E4;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #FFF5E4; padding: 40px 20px;">
+          <tr>
+            <td align="center">
+              <!-- Main Container -->
+              <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                
+                <!-- Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, #CD5C08 0%, #A34906 100%); padding: 30px 40px; text-align: center;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: bold; letter-spacing: 1px;">
+                      NutriBin
+                    </h1>
+                    ${title ? `<p style="margin: 8px 0 0 0; color: #FFF5E4; font-size: 14px; font-weight: 500;">${title}</p>` : ''}
+                  </td>
+                </tr>
+
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 40px; color: #333333; font-size: 16px; line-height: 1.6;">
+                    ${content}
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #FFF5E4; padding: 30px 40px; text-align: center; border-top: 2px solid #CD5C08;">
+                    <p style="margin: 0 0 10px 0; color: #666666; font-size: 14px;">
+                      <strong>NutriBin</strong> - Smart Nutrition Management
+                    </p>
+                    <p style="margin: 0; color: #999999; font-size: 12px;">
+                      This is an automated message. Please do not reply to this email.
+                    </p>
+                    <p style="margin: 15px 0 0 0; color: #999999; font-size: 12px;">
+                      © ${new Date().getFullYear()} NutriBin. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+  }
+
   private initializeTransporter() {
     // Configure your email transporter
     // You can use environment variables for configuration
@@ -120,14 +182,21 @@ export class NodemailerService {
    */
   async sendWelcomeEmail(to: string, name: string) {
     const subject = 'Welcome to NutriBin!';
-    const html = `
-      <h1>Welcome to NutriBin, ${name}!</h1>
-      <p>Thank you for joining our platform.</p>
-      <p>We're excited to have you on board!</p>
-      <br/>
-      <p>Best regards,</p>
-      <p>The NutriBin Team</p>
+    const content = `
+      <h2 style="margin: 0 0 20px 0; color: #CD5C08; font-size: 24px;">Welcome, ${name}! 🎉</h2>
+      <p style="margin: 0 0 15px 0;">Thank you for joining NutriBin, your smart nutrition management platform.</p>
+      <p style="margin: 0 0 15px 0;">We're excited to have you on board and can't wait to help you on your nutrition journey.</p>
+      <div style="background-color: #FFF5E4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="margin: 0; font-weight: bold; color: #CD5C08;">What's Next?</p>
+        <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #666;">
+          <li>Explore your dashboard</li>
+          <li>Set up your profile</li>
+          <li>Start tracking your nutrition</li>
+        </ul>
+      </div>
+      <p style="margin: 20px 0 0 0; color: #666;">If you have any questions, feel free to reach out to our support team.</p>
     `;
+    const html = this.getEmailTemplate(content, 'Welcome Aboard');
     return this.sendHtmlEmail(to, subject, html);
   }
 
@@ -138,18 +207,21 @@ export class NodemailerService {
    */
   async sendPasswordResetEmail(to: string, resetToken: string) {
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
-    const subject = 'Password Reset Request';
-    const html = `
-      <h2>Password Reset Request</h2>
-      <p>You requested a password reset for your NutriBin account.</p>
-      <p>Click the link below to reset your password:</p>
-      <a href="${resetUrl}">${resetUrl}</a>
-      <p>This link will expire in 1 hour.</p>
-      <p>If you didn't request this, please ignore this email.</p>
-      <br/>
-      <p>Best regards,</p>
-      <p>The NutriBin Team</p>
+    const subject = 'Password Reset Request - NutriBin';
+    const content = `
+      <h2 style="margin: 0 0 20px 0; color: #CD5C08; font-size: 24px;">Reset Your Password 🔐</h2>
+      <p style="margin: 0 0 15px 0;">We received a request to reset the password for your NutriBin account.</p>
+      <p style="margin: 0 0 20px 0;">Click the button below to create a new password:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${resetUrl}" style="display: inline-block; background-color: #CD5C08; color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-weight: bold; font-size: 16px;">Reset Password</a>
+      </div>
+      <div style="background-color: #FFF5E4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="margin: 0 0 10px 0; font-weight: bold; color: #CD5C08;">⚠️ Security Note</p>
+        <p style="margin: 0; color: #666; font-size: 14px;">This link will expire in <strong>1 hour</strong> for your security.</p>
+      </div>
+      <p style="margin: 20px 0 0 0; color: #666; font-size: 14px;">If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
     `;
+    const html = this.getEmailTemplate(content, 'Password Reset');
     return this.sendHtmlEmail(to, subject, html);
   }
 
@@ -160,16 +232,20 @@ export class NodemailerService {
    */
   async sendPasswordResetCodeEmail(to: string, code: string) {
     const subject = 'Your NutriBin Password Reset Code';
-    const html = `
-      <h2>Password Reset Code</h2>
-      <p>Use the verification code below to reset your NutriBin account password.</p>
-      <p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">${code}</p>
-      <p>This code will expire in 15 minutes.</p>
-      <p>If you did not request a password reset, you can safely ignore this email.</p>
-      <br/>
-      <p>Best regards,</p>
-      <p>The NutriBin Team</p>
+    const content = `
+      <h2 style="margin: 0 0 20px 0; color: #CD5C08; font-size: 24px;">Your Verification Code 🔑</h2>
+      <p style="margin: 0 0 20px 0;">Use the verification code below to reset your NutriBin account password.</p>
+      <div style="background: linear-gradient(135deg, #FFF5E4 0%, #FFE8CC 100%); padding: 30px; border-radius: 12px; text-align: center; margin: 30px 0; border: 2px solid #CD5C08;">
+        <p style="margin: 0; color: #666; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Verification Code</p>
+        <p style="margin: 15px 0 0 0; font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #CD5C08; font-family: 'Courier New', monospace;">${code}</p>
+      </div>
+      <div style="background-color: #FFF5E4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="margin: 0 0 10px 0; font-weight: bold; color: #CD5C08;">⏱️ Time Sensitive</p>
+        <p style="margin: 0; color: #666; font-size: 14px;">This code will expire in <strong>15 minutes</strong>.</p>
+      </div>
+      <p style="margin: 20px 0 0 0; color: #666; font-size: 14px;">If you did not request a password reset, please ignore this email and your password will remain secure.</p>
     `;
+    const html = this.getEmailTemplate(content, 'Password Reset Code');
     return this.sendHtmlEmail(to, subject, html);
   }
 
@@ -188,20 +264,48 @@ export class NodemailerService {
     },
   ) {
     const subject = `Repair Notification - Machine ${repairDetails.machineId}`;
-    const html = `
-      <h2>Repair Notification</h2>
-      <p>A repair request has been ${repairDetails.status}.</p>
-      <h3>Details:</h3>
-      <ul>
-        <li><strong>Machine ID:</strong> ${repairDetails.machineId}</li>
-        <li><strong>Issue Type:</strong> ${repairDetails.issueType}</li>
-        <li><strong>Status:</strong> ${repairDetails.status}</li>
-        ${repairDetails.description ? `<li><strong>Description:</strong> ${repairDetails.description}</li>` : ''}
-      </ul>
-      <br/>
-      <p>Best regards,</p>
-      <p>The NutriBin Team</p>
+    const statusColors: Record<string, string> = {
+      pending: '#FFA500',
+      'in-progress': '#0066CC',
+      completed: '#00AA00',
+      cancelled: '#CC0000',
+    };
+    const statusColor =
+      statusColors[repairDetails.status.toLowerCase()] || '#CD5C08';
+    const content = `
+      <h2 style="margin: 0 0 20px 0; color: #CD5C08; font-size: 24px;">Repair Status Update 🔧</h2>
+      <p style="margin: 0 0 20px 0;">A repair request for Machine <strong>${repairDetails.machineId}</strong> has been <strong>${repairDetails.status}</strong>.</p>
+      <div style="background-color: #FFF5E4; padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid ${statusColor};">
+        <h3 style="margin: 0 0 15px 0; color: #CD5C08; font-size: 18px;">Repair Details</h3>
+        <table width="100%" cellpadding="8" cellspacing="0">
+          <tr>
+            <td style="padding: 8px 0; color: #666; font-weight: 600; width: 140px;">Machine ID:</td>
+            <td style="padding: 8px 0; color: #333;">${repairDetails.machineId}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #666; font-weight: 600;">Issue Type:</td>
+            <td style="padding: 8px 0; color: #333;">${repairDetails.issueType}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #666; font-weight: 600;">Status:</td>
+            <td style="padding: 8px 0;">
+              <span style="display: inline-block; padding: 4px 12px; background-color: ${statusColor}; color: #ffffff; border-radius: 6px; font-weight: 600; font-size: 14px; text-transform: uppercase;">${repairDetails.status}</span>
+            </td>
+          </tr>
+          ${
+            repairDetails.description
+              ? `
+          <tr>
+            <td style="padding: 8px 0; color: #666; font-weight: 600; vertical-align: top;">Description:</td>
+            <td style="padding: 8px 0; color: #333;">${repairDetails.description}</td>
+          </tr>`
+              : ''
+          }
+        </table>
+      </div>
+      <p style="margin: 20px 0 0 0; color: #666;">You will receive further updates as the repair progresses.</p>
     `;
+    const html = this.getEmailTemplate(content, 'Repair Notification');
     return this.sendHtmlEmail(to, subject, html);
   }
 }

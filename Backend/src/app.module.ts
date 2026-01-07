@@ -7,6 +7,7 @@ import { RepairManagementController } from './controllers/management/repair-mana
 import { ArchiveManagementController } from './controllers/management/archive-management.controller';
 import { MachineManagementController } from './controllers/management/machine-management.controller';
 import { SettingsController } from './controllers/settings/settings.controller';
+import { AuthenticationController } from './controllers/settings/authentication.controller';
 
 import { AppService } from './service/app.service';
 import { DatabaseService } from './service/database/database.service';
@@ -24,6 +25,7 @@ import { NodemailerService } from './service/email/nodemailer.service';
     ArchiveManagementController,
     MachineManagementController,
     SettingsController,
+    AuthenticationController,
   ],
   providers: [AppService, DatabaseService, StaffAuthService, NodemailerService],
 })

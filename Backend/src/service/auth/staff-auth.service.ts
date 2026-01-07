@@ -9,6 +9,7 @@ import * as bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
 
 import { DatabaseService } from '../database/database.service';
+import { NodemailerService } from '../email/nodemailer.service';
 import type {
   StaffSignInDto,
   StaffSignUpDto,
@@ -38,7 +39,10 @@ type StaffDbRow = StaffPublicRow & {
 export class StaffAuthService {
   private googleClient: OAuth2Client;
 
-  constructor(private readonly databaseService: DatabaseService) {
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly mailer: NodemailerService,
+  ) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     if (!clientId) {
       console.warn(
@@ -150,6 +154,106 @@ export class StaffAuthService {
         };
       }
 
+      // Check if MFA is enabled for this admin
+      const mfaResult = await client.query<any>(
+        `SELECT authentication_type, enabled FROM authentication WHERE admin_id = $1 LIMIT 1`,
+        [admin.id],
+      );
+
+      if (
+        mfaResult.rowCount &&
+        mfaResult.rows[0].enabled &&
+        mfaResult.rows[0].authentication_type === 'email'
+      ) {
+        // Generate MFA verification token
+        const mfaToken = Array.from({ length: 32 }, () =>
+          Math.floor(Math.random() * 16).toString(16),
+        ).join('');
+
+        const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        // Store the token using UPSERT pattern
+        await client.query(
+          `INSERT INTO authentication (admin_id, mfa_token, mfa_token_expiry, user_type, authentication_type, enabled)
+           VALUES ($1, $2, $3, 'admin', 'email', true)
+           ON CONFLICT (admin_id) DO UPDATE SET mfa_token = $2, mfa_token_expiry = $3`,
+          [admin.id, mfaToken, tokenExpiry],
+        );
+
+        // Send verification email
+        const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-mfa?token=${mfaToken}&adminId=${admin.id}`;
+        const emailContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Verify Your Login</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #FFF5E4;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #FFF5E4; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                  
+                  <!-- Header -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #CD5C08 0%, #A34906 100%); padding: 30px 40px; text-align: center;">
+                      <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: bold; letter-spacing: 1px;">NutriBin</h1>
+                      <p style="margin: 8px 0 0 0; color: #FFF5E4; font-size: 14px; font-weight: 500;">Multi-Factor Authentication</p>
+                    </td>
+                  </tr>
+
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 40px; color: #333333; font-size: 16px; line-height: 1.6;">
+                      <h2 style="margin: 0 0 20px 0; color: #CD5C08; font-size: 24px;">Verify Your Login 🔐</h2>
+                      <p style="margin: 0 0 15px 0;">Hello <strong>${admin.first_name}</strong>,</p>
+                      <p style="margin: 0 0 20px 0;">A login attempt was made to your NutriBin account. To complete the sign-in process, please verify your identity by clicking the button below.</p>
+                      <div style="text-align: center; margin: 35px 0;">
+                        <a href="${verificationLink}" style="display: inline-block; background-color: #CD5C08; color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 6px rgba(205, 92, 8, 0.3);">Verify Login</a>
+                      </div>
+                      <div style="background-color: #FFF5E4; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                        <p style="margin: 0 0 10px 0; font-weight: bold; color: #CD5C08;">⏱️ Time Sensitive</p>
+                        <p style="margin: 0; color: #666; font-size: 14px;">This verification link will expire in <strong>24 hours</strong>.</p>
+                      </div>
+                      <div style="background-color: #FFF9F0; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FFA500;">
+                        <p style="margin: 0 0 10px 0; font-weight: bold; color: #FF8800;">⚠️ Security Alert</p>
+                        <p style="margin: 0; color: #666; font-size: 14px;">If you didn't attempt to log in, please ignore this email and ensure your account password is secure.</p>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background-color: #FFF5E4; padding: 30px 40px; text-align: center; border-top: 2px solid #CD5C08;">
+                      <p style="margin: 0 0 10px 0; color: #666666; font-size: 14px;"><strong>NutriBin</strong> - Smart Nutrition Management</p>
+                      <p style="margin: 0; color: #999999; font-size: 12px;">This is an automated message. Please do not reply to this email.</p>
+                      <p style="margin: 15px 0 0 0; color: #999999; font-size: 12px;">© ${new Date().getFullYear()} NutriBin. All rights reserved.</p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `;
+        await this.mailer.sendHtmlEmail(
+          admin.email,
+          'NutriBin - Verify Your Login',
+          emailContent,
+        );
+
+        return {
+          ok: true,
+          requiresMFA: true,
+          message: 'MFA verification email sent',
+          adminId: admin.id,
+        };
+      }
+
       const safeAdmin = {
         admin_id: admin.id,
         first_name: admin.first_name,
@@ -202,6 +306,106 @@ export class StaffAuthService {
           staff.status === 'banned'
             ? 'This staff account is banned'
             : 'This staff account is inactive',
+      };
+    }
+
+    // Check if MFA is enabled for this staff
+    const mfaResult = await client.query<any>(
+      `SELECT authentication_type, enabled FROM authentication WHERE staff_id = $1 LIMIT 1`,
+      [staff.staff_id],
+    );
+
+    if (
+      mfaResult.rowCount &&
+      mfaResult.rows[0].enabled &&
+      mfaResult.rows[0].authentication_type === 'email'
+    ) {
+      // Generate MFA verification token
+      const mfaToken = Array.from({ length: 32 }, () =>
+        Math.floor(Math.random() * 16).toString(16),
+      ).join('');
+
+      const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      // Store the token using UPSERT pattern
+      await client.query(
+        `INSERT INTO authentication (staff_id, mfa_token, mfa_token_expiry, user_type, authentication_type, enabled)
+         VALUES ($1, $2, $3, 'staff', 'email', true)
+         ON CONFLICT (staff_id) DO UPDATE SET mfa_token = $2, mfa_token_expiry = $3`,
+        [staff.staff_id, mfaToken, tokenExpiry],
+      );
+
+      // Send verification email
+      const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-mfa?token=${mfaToken}&staffId=${staff.staff_id}`;
+      const emailContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Verify Your Login</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #FFF5E4;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #FFF5E4; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                  
+                  <!-- Header -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #CD5C08 0%, #A34906 100%); padding: 30px 40px; text-align: center;">
+                      <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: bold; letter-spacing: 1px;">NutriBin</h1>
+                      <p style="margin: 8px 0 0 0; color: #FFF5E4; font-size: 14px; font-weight: 500;">Multi-Factor Authentication</p>
+                    </td>
+                  </tr>
+
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 40px; color: #333333; font-size: 16px; line-height: 1.6;">
+                      <h2 style="margin: 0 0 20px 0; color: #CD5C08; font-size: 24px;">Verify Your Login 🔐</h2>
+                      <p style="margin: 0 0 15px 0;">Hello <strong>${staff.first_name}</strong>,</p>
+                      <p style="margin: 0 0 20px 0;">A login attempt was made to your NutriBin account. To complete the sign-in process, please verify your identity by clicking the button below.</p>
+                      <div style="text-align: center; margin: 35px 0;">
+                        <a href="${verificationLink}" style="display: inline-block; background-color: #CD5C08; color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 8px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 6px rgba(205, 92, 8, 0.3);">Verify Login</a>
+                      </div>
+                      <div style="background-color: #FFF5E4; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                        <p style="margin: 0 0 10px 0; font-weight: bold; color: #CD5C08;">⏱️ Time Sensitive</p>
+                        <p style="margin: 0; color: #666; font-size: 14px;">This verification link will expire in <strong>24 hours</strong>.</p>
+                      </div>
+                      <div style="background-color: #FFF9F0; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FFA500;">
+                        <p style="margin: 0 0 10px 0; font-weight: bold; color: #FF8800;">⚠️ Security Alert</p>
+                        <p style="margin: 0; color: #666; font-size: 14px;">If you didn't attempt to log in, please ignore this email and ensure your account password is secure.</p>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background-color: #FFF5E4; padding: 30px 40px; text-align: center; border-top: 2px solid #CD5C08;">
+                      <p style="margin: 0 0 10px 0; color: #666666; font-size: 14px;"><strong>NutriBin</strong> - Smart Nutrition Management</p>
+                      <p style="margin: 0; color: #999999; font-size: 12px;">This is an automated message. Please do not reply to this email.</p>
+                      <p style="margin: 15px 0 0 0; color: #999999; font-size: 12px;">© ${new Date().getFullYear()} NutriBin. All rights reserved.</p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `;
+      await this.mailer.sendHtmlEmail(
+        staff.email,
+        'NutriBin - Verify Your Login',
+        emailContent,
+      );
+
+      return {
+        ok: true,
+        requiresMFA: true,
+        message: 'MFA verification email sent',
+        staffId: staff.staff_id,
       };
     }
 

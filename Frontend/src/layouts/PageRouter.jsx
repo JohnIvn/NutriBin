@@ -1,6 +1,7 @@
 import Settings from "@/pages/Settings";
 import Analytics from "@/pages/Analytics";
 import Login from "@/pages/Login";
+import { VerifyMFA } from "@/pages/VerifyMFA";
 import Machines from "@/pages/Machines";
 import MachinesGrid from "@/pages/MachinesGrid";
 import Modules from "@/pages/Modules";
@@ -22,6 +23,7 @@ function PageRouter() {
       <Route path="*" element={<h1>404 Not Found</h1>} />
       <Route path="/" element={<Navigate replace to={"/login"} />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/verify-mfa" element={<VerifyMFA />} />
 
       <Route
         path="/staff"
