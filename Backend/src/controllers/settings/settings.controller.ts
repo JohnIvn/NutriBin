@@ -187,6 +187,56 @@ export class SettingsController {
     }
   }
 
+  @Patch(':staffId/close')
+  async closeAccount(@Param('staffId') staffId: string) {
+    if (!staffId) {
+      throw new BadRequestException('staffId is required');
+    }
+
+    const client = this.databaseService.getClient();
+
+    try {
+      const existing = await client.query<{ status: string }>(
+        'SELECT status FROM user_staff WHERE staff_id = $1 LIMIT 1',
+        [staffId],
+      );
+
+      if (!existing.rowCount) {
+        throw new NotFoundException('Staff account not found');
+      }
+
+      const currentStatus = existing.rows[0].status;
+      if (currentStatus === 'inactive') {
+        throw new BadRequestException('Account is already inactive');
+      }
+      if (currentStatus === 'banned') {
+        throw new BadRequestException('Banned accounts cannot be closed');
+      }
+
+      await client.query(
+        `UPDATE user_staff
+         SET status = 'inactive', last_updated = now()
+         WHERE staff_id = $1`,
+        [staffId],
+      );
+
+      return {
+        ok: true,
+        message: 'Account has been deactivated',
+        status: 'inactive',
+      };
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Failed to close account');
+    }
+  }
+
   @Post(':staffId/password-reset')
   async requestPasswordReset(@Param('staffId') staffId: string) {
     if (!staffId) {

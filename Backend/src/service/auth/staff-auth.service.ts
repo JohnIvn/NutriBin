@@ -128,6 +128,16 @@ export class StaffAuthService {
         };
       }
 
+      if (admin.status !== 'active') {
+        return {
+          ok: false,
+          error:
+            admin.status === 'banned'
+              ? 'This admin account is banned'
+              : 'This admin account is inactive',
+        };
+      }
+
       const safeAdmin = {
         admin_id: admin.id,
         first_name: admin.first_name,
@@ -170,6 +180,16 @@ export class StaffAuthService {
       return {
         ok: false,
         error: 'Wrong password',
+      };
+    }
+
+    if (staff.status !== 'active') {
+      return {
+        ok: false,
+        error:
+          staff.status === 'banned'
+            ? 'This staff account is banned'
+            : 'This staff account is inactive',
       };
     }
 

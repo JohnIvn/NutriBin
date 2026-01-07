@@ -16,6 +16,7 @@ import { useForm } from "react-hook-form";
 import { useUser } from "@/contexts/UserContext";
 import Requests from "@/utils/Requests";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +30,8 @@ function Account() {
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
-  const { user } = useUser();
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
   const [resetOpen, setResetOpen] = useState(false);
   const [sendingReset, setSendingReset] = useState(false);
   const [resetSent, setResetSent] = useState(false);
@@ -40,6 +42,8 @@ function Account() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resetSubmitting, setResetSubmitting] = useState(false);
+  const [closingAccount, setClosingAccount] = useState(false);
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(adminAccount),
@@ -134,6 +138,32 @@ function Account() {
       console.error(error);
     } finally {
       setSaveLoading(false);
+    }
+  };
+
+  const handleCloseAccount = async () => {
+    if (!user?.staff_id) return;
+
+    try {
+      setClosingAccount(true);
+      const response = await Requests({
+        url: `/settings/${user.staff_id}/close`,
+        method: "PATCH",
+        credentials: true,
+      });
+
+      if (response.data?.ok) {
+        toast.success("Account deactivated. You have been logged out.");
+        logout();
+        navigate("/login");
+      } else {
+        toast.error(response.data?.message || "Failed to close account");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to close account");
+    } finally {
+      setClosingAccount(false);
+      setCloseConfirmOpen(false);
     }
   };
 
@@ -588,15 +618,48 @@ function Account() {
             </h1>
             <hr className="w-full border-gray-100" />
             <p className="text-gray-500 text-center text-sm leading-relaxed w-full">
-              Permanently delete your account. This action cannot be undone.
+              Deactivate your account and sign out. You will not be able to log
+              in again unless an admin reactivates you.
             </p>
             <Button
               variant="destructive"
               className="w-full h-10 cursor-pointer"
+              disabled={closingAccount}
+              onClick={() => setCloseConfirmOpen(true)}
             >
-              Close
+              {closingAccount ? "Closing..." : "Close"}
             </Button>
           </div>
+
+          <Dialog open={closeConfirmOpen} onOpenChange={setCloseConfirmOpen}>
+            <DialogContent className="bg-white">
+              <DialogHeader>
+                <DialogTitle>Close account</DialogTitle>
+                <DialogDescription>
+                  Deactivate your account and sign out. You will not be able to
+                  log in again unless an admin reactivates you.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={closingAccount}
+                  onClick={() => setCloseConfirmOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={closingAccount}
+                  onClick={handleCloseAccount}
+                >
+                  {closingAccount ? "Closing..." : "Confirm close"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </section>
     </section>
